@@ -5,8 +5,7 @@
 * Simple API (your grandmother can use it)
 * "Store" approach for backend
 * Redis support (but not tied too)
-* HTTP middleware
-* go-json-rest middleware
+* Middlewares: HTTP and [go-json-rest][2]
 
 ## The Why
 
@@ -81,14 +80,14 @@ if err != nil {
 
 // Then, create a store. Here, we use the bundled Redis store. Any store
 // compliant to limiter.Store interface will do the job.
-store, err := ratelimit.NewRedisStore(pool)
+store, err := limiter.NewRedisStore(pool)
 if err != nil {
     panic(err)
 }
 
 // Then, create the limiter instance which takes the store and the rate as arguments.
 // Now, you can give this instance to any supported middleware.
-limiter := ratelimit.NewLimiter(store, rate)
+limiter := limiter.NewLimiter(store, rate)
 ```
 
 Once done, give this instance to your middleware.
@@ -97,7 +96,6 @@ See middleware examples:
 
 * [HTTP](https://github.com/ulule/limiter/tree/master/examples/http)
 * [go-json-rest](https://github.com/ulule/limiter/tree/master/examples/gjr)
-
 
 [1]: https://github.com/throttled/throttled
 [2]: https://github.com/ant0ine/go-json-rest
