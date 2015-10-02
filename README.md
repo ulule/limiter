@@ -87,7 +87,7 @@ if err != nil {
 
 // Then, create the limiter instance which takes the store and the rate as arguments.
 // Now, you can give this instance to any supported middleware.
-limiter := limiter.NewLimiter(store, rate)
+limiterInstance := limiter.NewLimiter(store, rate)
 ```
 
 Once done, give this instance to your middleware.
