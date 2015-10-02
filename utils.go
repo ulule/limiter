@@ -1,37 +1,25 @@
 package limiter
 
 import (
-	"math/rand"
 	"net"
 	"net/http"
 	"strings"
 )
 
-// QueryIP returns real IP address from request.
-func QueryIP(r *http.Request) net.IP {
-	if r.URL.Path[len(r.URL.Path)-1] == '/' {
-		return RemoteAddr(r)
+// GetIP returns IP address from request.
+func GetIP(r *http.Request) net.IP {
+	if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
+		parts := strings.Split(ip, ",")
+		for i, part := range parts {
+			parts[i] = strings.TrimSpace(part)
+		}
+		return net.ParseIP(parts[0])
 	}
 
-	q := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
-	if ip := net.ParseIP(q); ip != nil {
-		return ip
+	if ip := r.Header.Get("X-Real-IP"); ip != "" {
+		return net.ParseIP(ip)
 	}
 
-	ip, err := net.LookupIP(q)
-	if err != nil {
-		return nil
-	}
-
-	if len(ip) == 0 {
-		return nil
-	}
-
-	return ip[rand.Intn(len(ip))]
-}
-
-// RemoteAddr returns remote IP address from request.
-func RemoteAddr(r *http.Request) net.IP {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return net.ParseIP(r.RemoteAddr)
