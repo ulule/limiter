@@ -4,7 +4,8 @@
 
 * Simple API (your grandmother can use it)
 * "Store" approach for backend
-* Redis support but not tied too
+* Redis support (but not tied too)
+* HTTP middleware
 * go-json-rest middleware
 
 ## The Why
@@ -50,14 +51,10 @@ $ go get github.com/ulule/limiter
 
 ## Usage
 
-See `examples` folder for live examples.
-
-### Create a Limiter
-
-Create a `limiter.Limiter` instance for your middleware:
+First, create a `limiter.Limiter` instance for your middleware:
 
 ```go
-// First, create a rate with the given limit (number of requests) for the given
+// Create a rate with the given limit (number of requests) for the given
 // period (a time.Duration of your choice).
 rate := limiter.Rate{
     Period: 1 * time.Hour,
@@ -94,36 +91,13 @@ if err != nil {
 limiter := ratelimit.NewLimiter(store, rate)
 ```
 
-### go-json-rest middleware
+Once done, give this instance to your middleware.
 
-Simply give your limiter instance to the middleware. Take a coffee. That's it.
+See middleware examples:
 
-```go
-package main
+* [HTTP](https://github.com/ulule/limiter/tree/master/examples/http)
+* [go-json-rest](https://github.com/ulule/limiter/tree/master/examples/gjr)
 
-import (
-    "github.com/ant0ine/go-json-rest/rest"
-    "log"
-    "net/http"
-)
-
-func main() {
-    // Here we create a new API instance with default development stack.
-    api := rest.NewApi()
-    api.Use(rest.DefaultDevStack...)
-
-    // Let's add the  bundled middleware with the limiter instance created above.
-    api.Use(limiter.NewGJRMiddleware(limiter))
-
-    // Create a simple app just to play with.
-    api.SetApp(rest.AppSimple(func(w rest.ResponseWriter, r *rest.Request) {
-        w.WriteJson(map[string]string{"message": "ok"})
-    }))
-
-    // Run server!
-    log.Fatal(http.ListenAndServe(":8080", api.MakeHandler()))
-}
-```
 
 [1]: https://github.com/throttled/throttled
 [2]: https://github.com/ant0ine/go-json-rest
