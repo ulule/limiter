@@ -50,7 +50,15 @@ $ go get github.com/ulule/limiter
 
 ## Usage
 
-First, create a `limiter.Limiter` instance for your middleware:
+In five steps:
+
+* Create a `limiter.Rate` instance (the number of requests per period)
+* Create a `limiter.Store` instance (see [store_redis](https://github.com/ulule/limiter/blob/master/store_redis.go) for Redis)
+* Create a `limiter.Limiter` instance that takes store and rate instances as arguments
+* Create a middleware instance for the middleware of your choice
+* Give the limiter instance to your middleware initializer
+
+Example:
 
 ```go
 // Create a rate with the given limit (number of requests) for the given
@@ -80,7 +88,7 @@ if err != nil {
 
 // Then, create a store. Here, we use the bundled Redis store. Any store
 // compliant to limiter.Store interface will do the job.
-store, err := limiter.NewRedisStore(pool)
+store, err := limiter.NewRedisStore(pool, "prefix_for_keys")
 if err != nil {
     panic(err)
 }
@@ -89,8 +97,6 @@ if err != nil {
 // Now, you can give this instance to any supported middleware.
 limiterInstance := limiter.NewLimiter(store, rate)
 ```
-
-Once done, give this instance to your middleware.
 
 See middleware examples:
 
