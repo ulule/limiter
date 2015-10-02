@@ -45,6 +45,6 @@ func main() {
 	}))
 
 	// Run server!
-	fmt.Println("Server is running on :3339...")
-	log.Fatal(http.ListenAndServe(":3339", api.MakeHandler()))
+	fmt.Println("Server is running on 7777...")
+	log.Fatal(http.ListenAndServe(":7777", api.MakeHandler()))
 }
