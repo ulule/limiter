@@ -55,31 +55,28 @@ func (s *RedisStore) Get(key string, rate Rate) (Context, error) {
 		return Context{}, err
 	}
 
-	expiry := (time.Now().UnixNano()/int64(time.Millisecond) + int64(rate.Period)/int64(time.Millisecond)) / 1000
-
 	exists, err := redis.Bool(c.Do("EXISTS", key))
 	if err != nil {
 		return ctx, err
 	}
 
+	ms := int64(time.Millisecond)
 	if !exists {
-		c.Do("HSET", key, "count", 1)
-		c.Do("HSET", key, "reset", expiry)
-		c.Do("EXPIRE", key, rate.Period.Seconds())
+		c.Do("SET", key, 1, "EX", rate.Period.Seconds())
 		return Context{
 			Limit:     rate.Limit,
 			Remaining: rate.Limit - 1,
-			Reset:     expiry,
+			Reset:     (time.Now().UnixNano()/ms + int64(rate.Period)/ms) / 1000,
 			Reached:   false,
 		}, nil
 	}
 
-	count, err := redis.Int64(c.Do("HINCRBY", key, "count", 1))
+	count, err := redis.Int64(c.Do("INCR", key))
 	if err != nil {
 		return ctx, nil
 	}
 
-	reset, err := redis.Int64(c.Do("HGET", key, "reset"))
+	pttl, err := redis.Int64(c.Do("PTTL", key))
 	if err != nil {
 		return ctx, nil
 	}
@@ -92,7 +89,7 @@ func (s *RedisStore) Get(key string, rate Rate) (Context, error) {
 	return Context{
 		Limit:     rate.Limit,
 		Remaining: remaining,
-		Reset:     reset,
+		Reset:     time.Now().Add(time.Duration(pttl) * time.Millisecond).Unix(),
 		Reached:   count > rate.Limit,
 	}, nil
 }
