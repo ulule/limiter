@@ -8,3 +8,5 @@ go:
   - 1.4
   - 1.5
 script: make test
+services:
+  - redis-server
