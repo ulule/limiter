@@ -20,7 +20,7 @@ In five steps:
 * Create a `limiter.Rate` instance (the number of requests per period)
 * Create a `limiter.Store` instance (see [store_redis](https://github.com/ulule/limiter/blob/master/store_redis.go) for Redis)
 * Create a `limiter.Limiter` instance that takes store and rate instances as arguments
-* Create a middleware instance for the middleware of your choice
+* Create a middleware instance using the middleware of your choice
 * Give the limiter instance to your middleware initializer
 
 Example:
@@ -83,9 +83,11 @@ When the limit is reached, a ``429`` HTTP code is sent.
 
 ## Why Yet Another Package
 
-Why yet another rate limit package? Because existing packages did not suit our needs.
+You could ask us: why yet another rate limit package?
 
-We tried:
+Because existing packages did not suit our needs.
+
+We tried a lot of alternatives:
 
 1. [Throttled][1]. This package uses the generic cell-rate algorithm. To cite the
 documentation: *"The algorithm has been slightly modified from its usual form to
