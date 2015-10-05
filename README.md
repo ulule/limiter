@@ -1,5 +1,7 @@
 # Limiter
 
+[![Build Status](https://travis-ci.org/ulule/limiter.svg)](https://travis-ci.org/ulule/limiter)
+
 *Dead simple rate limit middleware for Go.*
 
 * Simple API (your grandmother can use it)
