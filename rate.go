@@ -23,15 +23,17 @@ func NewRateFromFormatted(formatted string) (Rate, error) {
 		return rate, fmt.Errorf("Incorrect format '%s'", formatted)
 	}
 
-	periods := map[string]bool{
-		"S": true, // Second
-		"M": true, // Minute
-		"H": true, // Hour
+	periods := map[string]time.Duration{
+		"S": time.Second, // Second
+		"M": time.Minute, // Minute
+		"H": time.Hour,   // Hour
 	}
 
 	limit, period := values[0], strings.ToUpper(values[1])
 
-	if _, ok := periods[period]; !ok {
+	duration, ok := periods[period]
+
+	if !ok {
 		return rate, fmt.Errorf("Incorrect period '%s'", period)
 	}
 
@@ -40,14 +42,7 @@ func NewRateFromFormatted(formatted string) (Rate, error) {
 		l int
 	)
 
-	switch period {
-	case "S":
-		p = 1 * time.Second
-	case "M":
-		p = 1 * time.Minute
-	case "H":
-		p = 1 * time.Hour
-	}
+	p = 1 * duration
 
 	l, err := strconv.Atoi(limit)
 	if err != nil {
