@@ -34,7 +34,7 @@ func main() {
 	mw := limiter.NewHTTPMiddleware(limiter.NewLimiter(store, rate))
 	http.Handle("/", mw.Handler(http.HandlerFunc(index)))
 
-	fmt.Println("Server is runnnig on port 7777...")
+	fmt.Println("Server is running on port 7777...")
 	log.Fatal(http.ListenAndServe(":7777", nil))
 
 }
