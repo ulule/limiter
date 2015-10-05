@@ -7,19 +7,10 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
-// RedisBucket is a redis bucket.
-type RedisBucket struct {
-	id    string
-	value int64
-}
-
 // RedisStore is the redis store.
 type RedisStore struct {
-	Pool            *redis.Pool
-	PrefixQuota     string
-	PrefixRemaining string
-	PrefixUsed      string
-	PrefixReset     string
+	Prefix string
+	Pool   *redis.Pool
 }
 
 // NewRedisStore returns an instance of redis store.
@@ -29,11 +20,8 @@ func NewRedisStore(pool *redis.Pool, prefix string) (*RedisStore, error) {
 	}
 
 	store := &RedisStore{
-		Pool:            pool,
-		PrefixQuota:     fmt.Sprintf("%s:quota:", prefix),
-		PrefixRemaining: fmt.Sprintf("%s:remaining:", prefix),
-		PrefixUsed:      fmt.Sprintf("%s:used:", prefix),
-		PrefixReset:     fmt.Sprintf("%s:reset:", prefix),
+		Pool:   pool,
+		Prefix: prefix,
 	}
 
 	if _, err := store.ping(); err != nil {
@@ -57,75 +45,54 @@ func (s *RedisStore) ping() (bool, error) {
 }
 
 // Get returns the limit for the identifier.
-func (s *RedisStore) Get(id string, rate Rate) (Context, error) {
-	var (
-		context Context
-		err     error
-		reply   []interface{}
-	)
+func (s *RedisStore) Get(key string, rate Rate) (Context, error) {
+	ctx := Context{}
+	key = fmt.Sprintf("%s:%s", s.Prefix, key)
 
-	conn := s.Pool.Get()
-	defer conn.Close()
-	if err = conn.Err(); err != nil {
-		return context, err
+	c := s.Pool.Get()
+	defer c.Close()
+	if err := c.Err(); err != nil {
+		return Context{}, err
 	}
 
-	quota := &RedisBucket{id: s.PrefixQuota + id}
-	remaining := &RedisBucket{id: s.PrefixRemaining + id}
-	used := &RedisBucket{id: s.PrefixUsed + id}
-	reset := &RedisBucket{id: s.PrefixReset + id}
+	expiry := (time.Now().UnixNano()/int64(time.Millisecond) + int64(rate.Period)/int64(time.Millisecond)) / 1000
 
-	millisecond := int64(time.Millisecond)
-	expiry := (time.Now().UnixNano()/millisecond + int64(rate.Period)/millisecond) / 1000
-
-	conn.Send("WATCH", remaining)
-	defer conn.Send("UNWATCH", remaining)
-
-	reply, err = redis.Values(conn.Do("MGET", quota.id, remaining.id, used.id, reset.id))
+	exists, err := redis.Bool(c.Do("EXISTS", key))
 	if err != nil {
-		return context, err
+		return ctx, err
 	}
 
-	if _, err = redis.Scan(reply, &quota.value, &remaining.value, &used.value, &reset.value); err != nil {
-		return context, err
+	if !exists {
+		c.Do("HSET", key, "count", 1)
+		c.Do("HSET", key, "reset", expiry)
+		c.Do("EXPIRE", key, rate.Period.Seconds())
+		return Context{
+			Limit:     rate.Limit,
+			Remaining: rate.Limit - 1,
+			Reset:     expiry,
+			Reached:   false,
+		}, nil
 	}
 
-	reached := false
+	count, err := redis.Int64(c.Do("HINCRBY", key, "count", "1"))
+	if err != nil {
+		return ctx, nil
+	}
 
-	if quota.value == 0 {
-		conn.Send("MULTI")
-		conn.Send("SET", quota.id, rate.Limit, "EX", rate.Period.Seconds(), "NX")
-		conn.Send("SET", remaining.id, rate.Limit-1, "EX", rate.Period.Seconds(), "NX")
-		conn.Send("SET", used.id, 1, "EX", rate.Period.Seconds(), "NX")
-		conn.Send("SET", reset.id, expiry, "EX", rate.Period.Seconds(), "NX")
+	reset, err := redis.Int64(c.Do("HGET", key, "reset"))
+	if err != nil {
+		return ctx, nil
+	}
 
-		if reply, err = redis.Values(conn.Do("EXEC")); err != nil {
-			return context, err
-		}
-
-		quota.value = rate.Limit
-		remaining.value = rate.Limit - 1
-		used.value = 1
-		reset.value = expiry
-
-	} else if remaining.value > 0 {
-		conn.Do("DECR", remaining.id)
-		remaining.value--
-
-		conn.Do("INCR", used.id)
-		used.value++
-
-	} else if remaining.value == 0 {
-		if used.value == quota.value {
-			reached = true
-		}
+	remaining := int64(0)
+	if count < rate.Limit {
+		remaining = rate.Limit - count
 	}
 
 	return Context{
-		Limit:     quota.value,
-		Remaining: remaining.value,
-		Used:      used.value,
-		Reset:     reset.value,
-		Reached:   reached,
+		Limit:     rate.Limit,
+		Remaining: remaining,
+		Reset:     reset,
+		Reached:   count > rate.Limit,
 	}, nil
 }
