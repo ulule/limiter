@@ -76,7 +76,7 @@ func (s *RedisStore) Get(key string, rate Rate) (Context, error) {
 		return ctx, nil
 	}
 
-	pttl, err := redis.Int64(c.Do("PTTL", key))
+	ttl, err := redis.Int64(c.Do("TTL", key))
 	if err != nil {
 		return ctx, nil
 	}
@@ -89,7 +89,7 @@ func (s *RedisStore) Get(key string, rate Rate) (Context, error) {
 	return Context{
 		Limit:     rate.Limit,
 		Remaining: remaining,
-		Reset:     time.Now().Add(time.Duration(pttl) * time.Millisecond).Unix(),
+		Reset:     time.Now().Add(time.Duration(ttl) * time.Second).Unix(),
 		Reached:   count > rate.Limit,
 	}, nil
 }
