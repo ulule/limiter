@@ -68,6 +68,19 @@ See middleware examples:
 * [HTTP](https://github.com/ulule/limiter/tree/master/examples/http)
 * [go-json-rest](https://github.com/ulule/limiter/tree/master/examples/gjr)
 
+## How it works
+
+The ip address of the request is used as a key in the store.
+
+If the key does not exist in the store we set a default
+value with an expiration period.
+
+Using [redis](http://redis.io/), we are relying on
+[TTL](http://redis.io/commands/ttl) and incrementing
+the rate limit on each request.
+
+When the limit is reached, a ``429`` HTTP code is sent.
+
 ## Why Yet Another Package
 
 Why yet another rate limit package? Because existing packages did not suit our needs.
