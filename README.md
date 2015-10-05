@@ -120,7 +120,7 @@ create yet another one.
 
 * Ping us on twitter [@oibafsellig](https://twitter.com/oibafsellig), [@thoas](https://twitter.com/thoas)
 * Fork the [project](https://github.com/ulule/limiter)
-* Fix [bugs](https://github.com/ulule/deepcopier/issues)
+* Fix [bugs](https://github.com/ulule/limiter/issues)
 
 Don't hesitate ;)
 
