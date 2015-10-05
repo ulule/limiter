@@ -74,7 +74,7 @@ func (s *RedisStore) Get(key string, rate Rate) (Context, error) {
 		}, nil
 	}
 
-	count, err := redis.Int64(c.Do("HINCRBY", key, "count", "1"))
+	count, err := redis.Int64(c.Do("HINCRBY", key, "count", 1))
 	if err != nil {
 		return ctx, nil
 	}
