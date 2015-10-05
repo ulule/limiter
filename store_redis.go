@@ -14,7 +14,7 @@ type RedisStore struct {
 }
 
 // NewRedisStore returns an instance of redis store.
-func NewRedisStore(pool *redis.Pool, prefix string) (*RedisStore, error) {
+func NewRedisStore(pool *redis.Pool, prefix string) (Store, error) {
 	if prefix == "" {
 		prefix = "ratelimit"
 	}
