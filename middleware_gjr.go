@@ -21,7 +21,7 @@ func NewGJRMiddleware(limiter *Limiter) *GJRMiddleware {
 // MiddlewareFunc is the middleware method (handler).
 func (m *GJRMiddleware) MiddlewareFunc(h rest.HandlerFunc) rest.HandlerFunc {
 	return func(w rest.ResponseWriter, r *rest.Request) {
-		context, err := m.Limiter.Get(fmt.Sprintf("%s", GetIP(r.Request)))
+		context, err := m.Limiter.Get(GetIPKey(r.Request))
 		if err != nil {
 			panic(err)
 		}

@@ -19,7 +19,7 @@ func NewHTTPMiddleware(limiter *Limiter) *HTTPMiddleware {
 // Handler the middleware handler.
 func (m *HTTPMiddleware) Handler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		context, err := m.Limiter.Get(fmt.Sprintf("%s", GetIP(r)))
+		context, err := m.Limiter.Get(GetIPKey(r))
 		if err != nil {
 			panic(err)
 		}
