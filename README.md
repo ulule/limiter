@@ -103,6 +103,14 @@ There are other many packages on GitHub but most are either too lightweight, too
 old (only support old Go versions) or unmaintained. So that's why we decided to
 create yet another one.
 
+## Contributing
+
+* Ping us on twitter [@oibafsellig](https://twitter.com/oibafsellig), [@thoas](https://twitter.com/thoas)
+* Fork the [project](https://github.com/ulule/limiter)
+* Fix [bugs](https://github.com/ulule/deepcopier/issues)
+
+Don't hesitate ;)
+
 [1]: https://github.com/throttled/throttled
 [2]: https://github.com/ant0ine/go-json-rest
 [3]: https://github.com/etcinit/speedbump
