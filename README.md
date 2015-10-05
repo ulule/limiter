@@ -20,7 +20,7 @@ $ go get github.com/ulule/limiter
 In five steps:
 
 * Create a `limiter.Rate` instance (the number of requests per period)
-* Create a `limiter.Store` instance (see [store_redis](https://github.com/ulule/limiter/blob/master/store_redis.go) for Redis)
+* Create a `limiter.Store` instance (see [store_redis](https://github.com/ulule/limiter/blob/master/store_redis.go) for Redis or [store_memory](https://github.com/ulule/limiter/blob/master/store_memory.go) for in-memory)
 * Create a `limiter.Limiter` instance that takes store and rate instances as arguments
 * Create a middleware instance using the middleware of your choice
 * Give the limiter instance to your middleware initializer
@@ -60,6 +60,9 @@ if err != nil {
     panic(err)
 }
 
+// Or use a in-memory store with a goroutine which clear expired keys every 30 seconds
+store := limiter.NewMemoryStore("prefix_for_keys", 30*time.Second)
+
 // Then, create the limiter instance which takes the store and the rate as arguments.
 // Now, you can give this instance to any supported middleware.
 limiterInstance := limiter.NewLimiter(store, rate)
@@ -77,9 +80,10 @@ The ip address of the request is used as a key in the store.
 If the key does not exist in the store we set a default
 value with an expiration period.
 
-Using [redis](http://redis.io/), we are relying on
-[TTL](http://redis.io/commands/ttl) and incrementing
-the rate limit on each request.
+You will find two stores:
+
+* RedisStore: rely on [TTL](http://redis.io/commands/ttl) and incrementing the rate limit on each request
+* MemoryStore: rely on [go-cache](https://github.com/pmylund/go-cache) with a goroutine to clear expired keys using a default interval
 
 When the limit is reached, a ``429`` HTTP code is sent.
 
