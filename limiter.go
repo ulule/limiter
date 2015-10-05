@@ -17,7 +17,6 @@ type Store interface {
 type Context struct {
 	Limit     int64
 	Remaining int64
-	Used      int64
 	Reset     int64
 	Reached   bool
 }
