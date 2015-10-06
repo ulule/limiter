@@ -35,8 +35,8 @@ type RedisStore struct {
 func NewRedisStore(pool *redis.Pool) (Store, error) {
 	store := &RedisStore{
 		Pool:     pool,
-		Prefix:   RedisDefaultPrefix,
-		MaxRetry: RedisDefaultMaxRetry,
+		Prefix:   DefaultPrefix,
+		MaxRetry: DefaultMaxRetry,
 	}
 
 	if _, err := store.ping(); err != nil {
@@ -49,11 +49,11 @@ func NewRedisStore(pool *redis.Pool) (Store, error) {
 // NewRedisStoreWithOptions returns an instance of redis store with custom options.
 func NewRedisStoreWithOptions(pool *redis.Pool, options RedisStoreOptions) (Store, error) {
 	if options.Prefix == "" {
-		options.Prefix = RedisDefaultPrefix
+		options.Prefix = DefaultPrefix
 	}
 
 	if options.MaxRetry == 0 {
-		options.MaxRetry = RedisDefaultMaxRetry
+		options.MaxRetry = DefaultMaxRetry
 	}
 
 	store := &RedisStore{
