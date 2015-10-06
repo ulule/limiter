@@ -7,21 +7,59 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
+// RedisStoreFunc is a redis store function.
+type RedisStoreFunc func(c redis.Conn, key string, rate Rate) ([]int, error)
+
+// RedisStoreOptions are options for Redis store.
+type RedisStoreOptions struct {
+	// The prefix to use for the key.
+	Prefix string
+
+	// The maximum number of retry under race conditions.
+	MaxRetry int
+}
+
 // RedisStore is the redis store.
 type RedisStore struct {
+	// The prefix to use for the key.
 	Prefix string
-	Pool   *redis.Pool
+
+	// github.com/garyburd/redigo Pool instance.
+	Pool *redis.Pool
+
+	// The maximum number of retry under race conditions.
+	MaxRetry int
 }
 
 // NewRedisStore returns an instance of redis store.
-func NewRedisStore(pool *redis.Pool, prefix string) (Store, error) {
-	if prefix == "" {
-		prefix = "ratelimit"
+func NewRedisStore(pool *redis.Pool) (Store, error) {
+	store := &RedisStore{
+		Pool:     pool,
+		Prefix:   RedisDefaultPrefix,
+		MaxRetry: RedisDefaultMaxRetry,
+	}
+
+	if _, err := store.ping(); err != nil {
+		return nil, err
+	}
+
+	return store, nil
+}
+
+// NewRedisStoreWithOptions returns an instance of redis store with custom options.
+func NewRedisStoreWithOptions(pool *redis.Pool, options RedisStoreOptions) (Store, error) {
+	if options.Prefix == "" {
+		options.Prefix = RedisDefaultPrefix
+	}
+
+	if options.MaxRetry == 0 {
+		options.MaxRetry = RedisDefaultMaxRetry
 	}
 
 	store := &RedisStore{
-		Pool:   pool,
-		Prefix: prefix,
+		Pool:     pool,
+		Prefix:   options.Prefix,
+		MaxRetry: options.MaxRetry,
 	}
 
 	if _, err := store.ping(); err != nil {
@@ -44,8 +82,38 @@ func (s *RedisStore) ping() (bool, error) {
 	return (data == "PONG"), nil
 }
 
+func (s RedisStore) do(f RedisStoreFunc, c redis.Conn, key string, rate Rate) ([]int, error) {
+	for i := 1; i <= s.MaxRetry; i++ {
+		values, err := f(c, key, rate)
+		if len(values) != 0 {
+			return values, err
+		}
+	}
+
+	return []int{}, fmt.Errorf("Retry limit exceeded")
+}
+
+func (s RedisStore) setRate(c redis.Conn, key string, rate Rate) ([]int, error) {
+	c.Send("MULTI")
+	c.Send("SETNX", key, 1)
+	c.Send("EXPIRE", key, rate.Period.Seconds())
+	return redis.Ints(c.Do("EXEC"))
+}
+
+func (s RedisStore) updateRate(c redis.Conn, key string, rate Rate) ([]int, error) {
+	c.Send("MULTI")
+	c.Send("INCR", key)
+	c.Send("TTL", key)
+	return redis.Ints(c.Do("EXEC"))
+}
+
 // Get returns the limit for the identifier.
-func (s *RedisStore) Get(key string, rate Rate) (Context, error) {
+func (s RedisStore) Get(key string, rate Rate) (Context, error) {
+	var (
+		err    error
+		values []int
+	)
+
 	ctx := Context{}
 	key = fmt.Sprintf("%s:%s", s.Prefix, key)
 
@@ -55,14 +123,10 @@ func (s *RedisStore) Get(key string, rate Rate) (Context, error) {
 		return Context{}, err
 	}
 
-	c.Send("WATCH", key)
-	defer c.Send("UNWATCH", key)
+	c.Do("WATCH", key)
+	defer c.Do("UNWATCH", key)
 
-	c.Send("MULTI")
-	c.Send("SETNX", key, 1)
-	c.Send("EXPIRE", key, rate.Period.Seconds())
-
-	values, err := redis.Ints(c.Do("EXEC"))
+	values, err = s.do(s.setRate, c, key, rate)
 	if err != nil || len(values) != 2 {
 		return ctx, err
 	}
@@ -79,11 +143,7 @@ func (s *RedisStore) Get(key string, rate Rate) (Context, error) {
 		}, nil
 	}
 
-	c.Send("MULTI")
-	c.Send("INCR", key)
-	c.Send("TTL", key)
-
-	values, err = redis.Ints(c.Do("EXEC"))
+	values, err = s.do(s.updateRate, c, key, rate)
 	if err != nil || len(values) != 2 {
 		return ctx, err
 	}
