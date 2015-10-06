@@ -3,6 +3,8 @@ package limiter
 import (
 	"fmt"
 	"math"
+	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -26,7 +28,7 @@ func TestGJRMiddleware(t *testing.T) {
 
 	handler := api.MakeHandler()
 	req := test.MakeSimpleRequest("GET", "http://localhost/", nil)
-	req.RemoteAddr = "178.1.2.3:124"
+	req.RemoteAddr = fmt.Sprintf("178.1.2.%d:120", Random(1, 90))
 
 	i := 1
 	for i < 20 {
@@ -45,4 +47,41 @@ func TestGJRMiddleware(t *testing.T) {
 		}
 		i++
 	}
+}
+
+// TestGJRMiddlewareWithRaceCondition test GRJ middleware under race condition.
+func TestGJRMiddlewareWithRaceCondition(t *testing.T) {
+	runtime.GOMAXPROCS(4)
+
+	api := rest.NewApi()
+
+	api.Use(NewGJRMiddleware(newRedisLimiter("5-M", "limitertests:gjrrace")))
+
+	api.SetApp(rest.AppSimple(func(w rest.ResponseWriter, r *rest.Request) {
+		w.WriteJson(map[string]string{"message": "ok"})
+	}))
+
+	handler := api.MakeHandler()
+	req := test.MakeSimpleRequest("GET", "http://localhost/", nil)
+	req.RemoteAddr = fmt.Sprintf("178.1.2.%d:180", Random(1, 90))
+
+	nbRequests := 100
+	successCount := 0
+
+	var wg sync.WaitGroup
+	wg.Add(nbRequests)
+
+	for i := 1; i <= nbRequests; i++ {
+		go func() {
+			recorded := test.RunRequest(t, handler, req)
+			if recorded.Recorder.Code == 200 {
+				successCount++
+			}
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+
+	assert.Equal(t, 5, successCount)
 }
