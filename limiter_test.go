@@ -42,7 +42,10 @@ func TestLimiterRedis(t *testing.T) {
 	rate, err := NewRateFromFormatted("3-M")
 	assert.Nil(t, err)
 
-	store, err := NewRedisStore(newRedisPool(), "limitertests:redis")
+	store, err := NewRedisStoreWithOptions(
+		newRedisPool(),
+		RedisStoreOptions{Prefix: "limitertests:redis"})
+
 	assert.Nil(t, err)
 
 	limiter := NewLimiter(store, rate)
@@ -89,7 +92,10 @@ func newRedisLimiter(formattedQuota string, prefix string) *Limiter {
 		panic(err)
 	}
 
-	store, err := NewRedisStore(newRedisPool(), prefix)
+	store, err := NewRedisStoreWithOptions(
+		newRedisPool(),
+		RedisStoreOptions{Prefix: prefix})
+
 	if err != nil {
 		panic(err)
 	}
