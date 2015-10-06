@@ -10,15 +10,6 @@ import (
 // RedisStoreFunc is a redis store function.
 type RedisStoreFunc func(c redis.Conn, key string, rate Rate) ([]int, error)
 
-// RedisStoreOptions are options for Redis store.
-type RedisStoreOptions struct {
-	// The prefix to use for the key.
-	Prefix string
-
-	// The maximum number of retry under race conditions.
-	MaxRetry int
-}
-
 // RedisStore is the redis store.
 type RedisStore struct {
 	// The prefix to use for the key.
@@ -33,29 +24,14 @@ type RedisStore struct {
 
 // NewRedisStore returns an instance of redis store.
 func NewRedisStore(pool *redis.Pool) (Store, error) {
-	store := &RedisStore{
-		Pool:     pool,
+	return NewRedisStoreWithOptions(pool, StoreOptions{
 		Prefix:   DefaultPrefix,
 		MaxRetry: DefaultMaxRetry,
-	}
-
-	if _, err := store.ping(); err != nil {
-		return nil, err
-	}
-
-	return store, nil
+	})
 }
 
 // NewRedisStoreWithOptions returns an instance of redis store with custom options.
-func NewRedisStoreWithOptions(pool *redis.Pool, options RedisStoreOptions) (Store, error) {
-	if options.Prefix == "" {
-		options.Prefix = DefaultPrefix
-	}
-
-	if options.MaxRetry == 0 {
-		options.MaxRetry = DefaultMaxRetry
-	}
-
+func NewRedisStoreWithOptions(pool *redis.Pool, options StoreOptions) (Store, error) {
 	store := &RedisStore{
 		Pool:     pool,
 		Prefix:   options.Prefix,
