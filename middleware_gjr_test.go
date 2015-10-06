@@ -28,7 +28,7 @@ func TestGJRMiddleware(t *testing.T) {
 
 	handler := api.MakeHandler()
 	req := test.MakeSimpleRequest("GET", "http://localhost/", nil)
-	req.RemoteAddr = "178.1.2.3:124"
+	req.RemoteAddr = fmt.Sprintf("178.1.2.%d:120", Random(1, 90))
 
 	i := 1
 	for i < 20 {
@@ -55,7 +55,7 @@ func TestGJRMiddlewareWithRaceCondition(t *testing.T) {
 
 	api := rest.NewApi()
 
-	api.Use(NewGJRMiddleware(newRedisLimiter("29-M", "limitertests:gjr")))
+	api.Use(NewGJRMiddleware(newRedisLimiter("5-M", "limitertests:gjrrace")))
 
 	api.SetApp(rest.AppSimple(func(w rest.ResponseWriter, r *rest.Request) {
 		w.WriteJson(map[string]string{"message": "ok"})
@@ -63,7 +63,7 @@ func TestGJRMiddlewareWithRaceCondition(t *testing.T) {
 
 	handler := api.MakeHandler()
 	req := test.MakeSimpleRequest("GET", "http://localhost/", nil)
-	req.RemoteAddr = "178.1.2.78:189"
+	req.RemoteAddr = fmt.Sprintf("178.1.2.%d:180", Random(1, 90))
 
 	nbRequests := 100
 	successCount := 0
@@ -83,5 +83,5 @@ func TestGJRMiddlewareWithRaceCondition(t *testing.T) {
 
 	wg.Wait()
 
-	assert.Equal(t, 29, successCount)
+	assert.Equal(t, 5, successCount)
 }

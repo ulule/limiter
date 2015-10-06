@@ -1,6 +1,7 @@
 package limiter
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"runtime"
@@ -13,7 +14,7 @@ import (
 // TestHTTPMiddleware tests the HTTP middleware.
 func TestHTTPMiddleware(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
-	req.RemoteAddr = "178.1.2.3:128"
+	req.RemoteAddr = fmt.Sprintf("178.1.2.%d:100", Random(1, 90))
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hello"))
@@ -39,13 +40,13 @@ func TestHTTPMiddlewareWithRaceCondition(t *testing.T) {
 	runtime.GOMAXPROCS(4)
 
 	req, _ := http.NewRequest("GET", "/", nil)
-	req.RemoteAddr = "178.1.2.28:128"
+	req.RemoteAddr = fmt.Sprintf("178.1.2.%d:110", Random(1, 90))
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hello"))
 	})
 
-	mw := NewHTTPMiddleware(newRedisLimiter("11-M", "limitertests:http")).Handler(handler)
+	mw := NewHTTPMiddleware(newRedisLimiter("11-M", "limitertests:httprace")).Handler(handler)
 
 	nbRequests := 100
 	successCount := 0
