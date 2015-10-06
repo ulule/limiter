@@ -55,14 +55,22 @@ func (s *RedisStore) Get(key string, rate Rate) (Context, error) {
 		return Context{}, err
 	}
 
-	exists, err := redis.Bool(c.Do("EXISTS", key))
-	if err != nil {
+	c.Send("WATCH", key)
+	defer c.Send("UNWATCH", key)
+
+	c.Send("MULTI")
+	c.Send("SETNX", key, 1)
+	c.Send("EXPIRE", key, rate.Period.Seconds())
+
+	values, err := redis.Ints(c.Do("EXEC"))
+	if err != nil || len(values) != 2 {
 		return ctx, err
 	}
 
+	created := (values[0] == 1)
 	ms := int64(time.Millisecond)
-	if !exists {
-		c.Do("SET", key, 1, "EX", rate.Period.Seconds())
+
+	if created {
 		return Context{
 			Limit:     rate.Limit,
 			Remaining: rate.Limit - 1,
@@ -71,17 +79,19 @@ func (s *RedisStore) Get(key string, rate Rate) (Context, error) {
 		}, nil
 	}
 
-	count, err := redis.Int64(c.Do("INCR", key))
-	if err != nil {
-		return ctx, nil
+	c.Send("MULTI")
+	c.Send("INCR", key)
+	c.Send("TTL", key)
+
+	values, err = redis.Ints(c.Do("EXEC"))
+	if err != nil || len(values) != 2 {
+		return ctx, err
 	}
 
-	ttl, err := redis.Int64(c.Do("TTL", key))
-	if err != nil {
-		return ctx, nil
-	}
-
+	count := int64(values[0])
+	ttl := int64(values[1])
 	remaining := int64(0)
+
 	if count < rate.Limit {
 		remaining = rate.Limit - count
 	}
