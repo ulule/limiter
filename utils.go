@@ -1,9 +1,11 @@
 package limiter
 
 import (
+	"math/rand"
 	"net"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // GetIP returns IP address from request.
@@ -31,4 +33,10 @@ func GetIP(r *http.Request) net.IP {
 // GetIPKey extracts IP from request and returns hashed IP to use as store key.
 func GetIPKey(r *http.Request) string {
 	return GetIP(r).String()
+}
+
+// Random return a random integer between min and max.
+func Random(min, max int) int {
+	rand.Seed(time.Now().Unix())
+	return rand.Intn(max-min) + min
 }
