@@ -85,12 +85,11 @@ func (s *RedisStore) ping() (bool, error) {
 func (s RedisStore) do(f RedisStoreFunc, c redis.Conn, key string, rate Rate) ([]int, error) {
 	for i := 1; i <= s.MaxRetry; i++ {
 		values, err := f(c, key, rate)
-		if len(values) != 0 {
-			return values, err
+		if err == nil && len(values) != 0 {
+			return values, nil
 		}
 	}
-
-	return []int{}, fmt.Errorf("Retry limit exceeded")
+	return nil, fmt.Errorf("retry limit exceeded")
 }
 
 func (s RedisStore) setRate(c redis.Conn, key string, rate Rate) ([]int, error) {
@@ -127,7 +126,7 @@ func (s RedisStore) Get(key string, rate Rate) (Context, error) {
 	defer c.Do("UNWATCH", key)
 
 	values, err = s.do(s.setRate, c, key, rate)
-	if err != nil || len(values) != 2 {
+	if err != nil {
 		return ctx, err
 	}
 
@@ -144,7 +143,7 @@ func (s RedisStore) Get(key string, rate Rate) (Context, error) {
 	}
 
 	values, err = s.do(s.updateRate, c, key, rate)
-	if err != nil || len(values) != 2 {
+	if err != nil {
 		return ctx, err
 	}
 
