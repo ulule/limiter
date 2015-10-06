@@ -1,8 +1,6 @@
 package limiter
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"net"
 	"net/http"
 	"net/url"
@@ -59,21 +57,4 @@ func TestGetIP(t *testing.T) {
 	r.Header.Add("X-Real-IP", "6.6.6.6")
 	ip = GetIP(&r)
 	assert.Equal(t, expected, ip)
-}
-
-// TestGetIPKey tests GetIPKey() function.
-func TestGetIPKey(t *testing.T) {
-	ip := net.ParseIP("8.8.8.8")
-
-	r := http.Request{
-		URL:        &url.URL{Path: "/"},
-		Header:     http.Header{},
-		RemoteAddr: "8.8.8.8:8888",
-	}
-
-	h := sha256.New()
-	h.Write([]byte(string(ip)))
-	expected := hex.EncodeToString(h.Sum(nil))
-
-	assert.Equal(t, expected, GetIPKey(&r))
 }

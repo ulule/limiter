@@ -1,8 +1,6 @@
 package limiter
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"net"
 	"net/http"
 	"strings"
@@ -32,8 +30,5 @@ func GetIP(r *http.Request) net.IP {
 
 // GetIPKey extracts IP from request and returns hashed IP to use as store key.
 func GetIPKey(r *http.Request) string {
-	ip := GetIP(r)
-	h := sha256.New()
-	h.Write([]byte(string(ip)))
-	return hex.EncodeToString(h.Sum(nil))
+	return GetIP(r).String()
 }
