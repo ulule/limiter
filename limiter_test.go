@@ -9,11 +9,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestLimiterMemory tests Limiter with memory store.
 func TestLimiterMemory(t *testing.T) {
 	rate, err := NewRateFromFormatted("3-M")
 	assert.Nil(t, err)
 
-	store := NewMemoryStore("limitertests:memory", 30*time.Second)
+	store := NewMemoryStoreWithOptions(StoreOptions{
+		Prefix:          "limitertests:memory",
+		CleanUpInterval: 30 * time.Second,
+	})
 
 	limiter := NewLimiter(store, rate)
 
@@ -37,7 +41,7 @@ func TestLimiterMemory(t *testing.T) {
 	}
 }
 
-// TestLimiterRedis tests ratelimit.Limiter with Redis store.
+// TestLimiterRedis tests Limiter with Redis store.
 func TestLimiterRedis(t *testing.T) {
 	rate, err := NewRateFromFormatted("3-M")
 	assert.Nil(t, err)
