@@ -2,25 +2,34 @@ package limiter
 
 import (
 	"fmt"
-	cache "github.com/pmylund/go-cache"
 	"time"
+
+	cache "github.com/pmylund/go-cache"
 )
 
+// MemoryStore is the in-memory store.
 type MemoryStore struct {
 	Cache  *cache.Cache
 	Prefix string
 }
 
-func NewMemoryStore(prefix string, cleanupInterval time.Duration) Store {
+// NewMemoryStore creates a new instance of memory store with defaults.
+func NewMemoryStore() Store {
+	return NewMemoryStoreWithOptions(StoreOptions{
+		Prefix:          DefaultPrefix,
+		CleanUpInterval: DefaultCleanUpInterval,
+	})
+}
 
-	cache := cache.New(cache.NoExpiration, cleanupInterval)
-
+// NewMemoryStoreWithOptions creates a new instance of memory store with options.
+func NewMemoryStoreWithOptions(options StoreOptions) Store {
 	return &MemoryStore{
-		Prefix: prefix,
-		Cache:  cache,
+		Prefix: options.Prefix,
+		Cache:  cache.New(cache.NoExpiration, options.CleanUpInterval),
 	}
 }
 
+// Get implement Store.Get() method.
 func (s *MemoryStore) Get(key string, rate Rate) (Context, error) {
 	ctx := Context{}
 
