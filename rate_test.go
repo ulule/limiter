@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestRate tests ratelimit.Rate methods.
+// TestRate tests Rate methods.
 func TestRate(t *testing.T) {
 	expected := map[string]Rate{
 		"10-S": Rate{
