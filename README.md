@@ -54,8 +54,21 @@ if err != nil {
 }
 
 // Then, create a store. Here, we use the bundled Redis store. Any store
-// compliant to limiter.Store interface will do the job.
-store, err := limiter.NewRedisStore(pool, "prefix_for_keys")
+// compliant to limiter.Store interface will do the job. The defaults are
+// "limiter" as Redis key prefix and a maximum of 3 retries for the key under
+// race condition.
+store, err := limiter.NewRedisStore(pool)
+if err != nil {
+    panic(err)
+}
+
+// Alternatively, you can pass options to the store with the "WithOptions"
+// function. For example, for Redis store:
+store, err := limiter.NewRedisStoreWithOptions(pool, limiter.StoreOptions{
+    Prefix:   "your_own_prefix",
+    MaxRetry: 4,
+})
+
 if err != nil {
     panic(err)
 }
