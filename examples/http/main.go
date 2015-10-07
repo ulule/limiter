@@ -26,7 +26,10 @@ func main() {
 	}, 100)
 
 	// Create a store with the pool.
-	store, err := limiter.NewRedisStore(pool, "limitergjrexample")
+	store, err := limiter.NewRedisStoreWithOptions(
+		pool,
+		limiter.StoreOptions{Prefix: "limiter_http_example", MaxRetry: 3})
+
 	if err != nil {
 		panic(err)
 	}
