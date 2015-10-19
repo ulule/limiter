@@ -4,7 +4,7 @@
 
 *Dead simple rate limit middleware for Go.*
 
-* Simple API (your grandmother can use it)
+* Simple API
 * "Store" approach for backend
 * Redis support (but not tied too)
 * Middlewares: HTTP and [go-json-rest][2]
