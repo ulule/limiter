@@ -73,7 +73,7 @@ if err != nil {
     panic(err)
 }
 
-// Or use a in-memory store with a goroutine which clear expired keys every 30 seconds
+// Or use a in-memory store with a goroutine which clears expired keys every 30 seconds
 store := limiter.NewMemoryStore("prefix_for_keys", 30*time.Second)
 
 // Then, create the limiter instance which takes the store and the rate as arguments.
