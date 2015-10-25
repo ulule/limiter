@@ -1,7 +1,7 @@
 package limiter
 
 import (
-	"fmt"
+	"strconv"
 
 	"github.com/ant0ine/go-json-rest/rest"
 )
@@ -26,9 +26,9 @@ func (m *GJRMiddleware) MiddlewareFunc(h rest.HandlerFunc) rest.HandlerFunc {
 			panic(err)
 		}
 
-		w.Header().Add("X-RateLimit-Limit", fmt.Sprintf("%d", context.Limit))
-		w.Header().Add("X-RateLimit-Remaining", fmt.Sprintf("%d", context.Remaining))
-		w.Header().Add("X-RateLimit-Reset", fmt.Sprintf("%d", context.Reset))
+		w.Header().Add("X-RateLimit-Limit", strconv.FormatInt(context.Limit, 10))
+		w.Header().Add("X-RateLimit-Remaining", strconv.FormatInt(context.Remaining, 10))
+		w.Header().Add("X-RateLimit-Reset", strconv.FormatInt(context.Reset, 10))
 
 		// That can be useful to access rate limit context in views.
 		r.Env["ratelimit:limit"] = context.Limit
