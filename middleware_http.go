@@ -2,8 +2,8 @@ package limiter
 
 // HTTPMiddleware is the middleware for basic http.Handler.
 import (
-	"fmt"
 	"net/http"
+	"strconv"
 )
 
 // HTTPMiddleware is the basic HTTP middleware.
@@ -24,9 +24,9 @@ func (m *HTTPMiddleware) Handler(h http.Handler) http.Handler {
 			panic(err)
 		}
 
-		w.Header().Add("X-RateLimit-Limit", fmt.Sprintf("%d", context.Limit))
-		w.Header().Add("X-RateLimit-Remaining", fmt.Sprintf("%d", context.Remaining))
-		w.Header().Add("X-RateLimit-Reset", fmt.Sprintf("%d", context.Reset))
+		w.Header().Add("X-RateLimit-Limit", strconv.FormatInt(context.Limit, 10))
+		w.Header().Add("X-RateLimit-Remaining", strconv.FormatInt(context.Remaining, 10))
+		w.Header().Add("X-RateLimit-Reset", strconv.FormatInt(context.Reset, 10))
 
 		if context.Reached {
 			http.Error(w, "Limit exceeded", 429)

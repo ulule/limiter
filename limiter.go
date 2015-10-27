@@ -22,7 +22,7 @@ type Limiter struct {
 	Rate  Rate
 }
 
-// NewLimiter returns an instance of ratelimit.
+// NewLimiter returns an instance of Limiter.
 func NewLimiter(store Store, rate Rate) *Limiter {
 	return &Limiter{
 		Store: store,

@@ -4,7 +4,7 @@
 
 *Dead simple rate limit middleware for Go.*
 
-* Simple API (your grandmother can use it)
+* Simple API
 * "Store" approach for backend
 * Redis support (but not tied too)
 * Middlewares: HTTP and [go-json-rest][2]
@@ -73,7 +73,7 @@ if err != nil {
     panic(err)
 }
 
-// Or use a in-memory store with a goroutine which clear expired keys every 30 seconds
+// Or use a in-memory store with a goroutine which clears expired keys every 30 seconds
 store := limiter.NewMemoryStore("prefix_for_keys", 30*time.Second)
 
 // Then, create the limiter instance which takes the store and the rate as arguments.
