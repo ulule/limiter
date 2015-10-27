@@ -71,7 +71,6 @@ func (s RedisStore) do(f RedisStoreFunc, c redis.Conn, key string, rate Rate) ([
 func (s RedisStore) setRate(c redis.Conn, key string, rate Rate) ([]int, error) {
 	c.Send("MULTI")
 	c.Send("SETNX", key, 1)
-	c.Send("EXPIRE", key, rate.Period.Seconds())
 	return redis.Ints(c.Do("EXEC"))
 }
 
@@ -110,6 +109,7 @@ func (s RedisStore) Get(key string, rate Rate) (Context, error) {
 	ms := int64(time.Millisecond)
 
 	if created {
+		c.Do("EXPIRE", key, rate.Period.Seconds())
 		return Context{
 			Limit:     rate.Limit,
 			Remaining: rate.Limit - 1,
