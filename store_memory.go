@@ -59,12 +59,11 @@ func (s *MemoryStore) Get(key string, rate Rate) (Context, error) {
 	}
 
 	expire := time.Unix(0, item.Expiration)
-	reset := expire.Add(time.Duration(expire.Sub(now).Seconds()) * time.Second).Unix()
 
 	return Context{
 		Limit:     rate.Limit,
 		Remaining: remaining,
-		Reset:     reset,
+		Reset:     expire.Add(time.Duration(expire.Sub(now).Seconds()) * time.Second).Unix(),
 		Reached:   count > rate.Limit,
 	}, nil
 }
