@@ -30,7 +30,6 @@ func TestLimiterMemory(t *testing.T) {
 			assert.Equal(t, int64(3), ctx.Limit)
 			assert.Equal(t, int64(3-i), ctx.Remaining)
 			assert.True(t, math.Ceil(time.Since(time.Unix(ctx.Reset, 0)).Seconds()) <= 60)
-
 		} else {
 			assert.Equal(t, int64(3), ctx.Limit)
 			assert.True(t, ctx.Remaining == 0)

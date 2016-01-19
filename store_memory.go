@@ -32,12 +32,10 @@ func NewMemoryStoreWithOptions(options StoreOptions) Store {
 // Get implement Store.Get() method.
 func (s *MemoryStore) Get(key string, rate Rate) (Context, error) {
 	ctx := Context{}
-
 	key = fmt.Sprintf("%s:%s", s.Prefix, key)
-
 	item, found := s.Cache.Items()[key]
-
 	ms := int64(time.Millisecond)
+	now := time.Now()
 
 	if !found || item.Expired() {
 		s.Cache.Set(key, int64(1), rate.Period)
@@ -45,29 +43,28 @@ func (s *MemoryStore) Get(key string, rate Rate) (Context, error) {
 		return Context{
 			Limit:     rate.Limit,
 			Remaining: rate.Limit - 1,
-			Reset:     (time.Now().UnixNano()/ms + int64(rate.Period)/ms) / 1000,
+			Reset:     (now.UnixNano()/ms + int64(rate.Period)/ms) / 1000,
 			Reached:   false,
 		}, nil
 	}
 
-	err := s.Cache.Increment(key, int64(1))
-
+	count, err := s.Cache.IncrementInt64(key, 1)
 	if err != nil {
-		return ctx, nil
+		return ctx, err
 	}
 
 	remaining := int64(0)
-
-	count := item.Object.(int64)
-
 	if count < rate.Limit {
 		remaining = rate.Limit - count
 	}
 
+	expire := time.Unix(0, item.Expiration)
+	reset := expire.Add(time.Duration(expire.Sub(now).Seconds()) * time.Second).Unix()
+
 	return Context{
 		Limit:     rate.Limit,
 		Remaining: remaining,
-		Reset:     time.Now().Add(time.Duration(item.Expiration) * time.Second).Unix(),
+		Reset:     reset,
 		Reached:   count > rate.Limit,
 	}, nil
 }
