@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	cache "github.com/pmylund/go-cache"
+	cache "github.com/patrickmn/go-cache"
 )
 
 // MemoryStore is the in-memory store.

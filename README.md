@@ -96,7 +96,7 @@ value with an expiration period.
 You will find two stores:
 
 * RedisStore: rely on [TTL](http://redis.io/commands/ttl) and incrementing the rate limit on each request
-* MemoryStore: rely on [go-cache](https://github.com/pmylund/go-cache) with a goroutine to clear expired keys using a default interval
+* MemoryStore: rely on [go-cache](https://github.com/patrickmn/go-cache) with a goroutine to clear expired keys using a default interval
 
 When the limit is reached, a ``429`` HTTP code is sent.
 
