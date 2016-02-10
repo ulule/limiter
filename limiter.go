@@ -34,3 +34,8 @@ func NewLimiter(store Store, rate Rate) *Limiter {
 func (l *Limiter) Get(key string) (Context, error) {
 	return l.Store.Get(key, l.Rate)
 }
+
+// Peek returns the limit for identifier without impacting accounting
+func (l *Limiter) Peek(key string) (Context, error) {
+	return l.Store.Peek(key, l.Rate)
+}

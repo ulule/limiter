@@ -5,6 +5,7 @@ import "time"
 // Store is the common interface for limiter stores.
 type Store interface {
 	Get(key string, rate Rate) (Context, error)
+	Peek(key string, rate Rate) (Context, error)
 }
 
 // StoreOptions are options for store.

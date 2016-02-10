@@ -2,12 +2,27 @@ package limiter
 
 import (
 	"math"
+	"math/rand"
 	"testing"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/stretchr/testify/assert"
 )
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func RandStringRunes(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
+}
 
 // TestLimiterMemory tests Limiter with memory store.
 func TestLimiterMemory(t *testing.T) {
@@ -19,25 +34,7 @@ func TestLimiterMemory(t *testing.T) {
 		CleanUpInterval: 30 * time.Second,
 	})
 
-	limiter := NewLimiter(store, rate)
-
-	i := 1
-	for i <= 5 {
-		ctx, err := limiter.Get("boo")
-		assert.Nil(t, err)
-
-		if i <= 3 {
-			assert.Equal(t, int64(3), ctx.Limit)
-			assert.Equal(t, int64(3-i), ctx.Remaining)
-			assert.True(t, math.Ceil(time.Since(time.Unix(ctx.Reset, 0)).Seconds()) <= 60)
-		} else {
-			assert.Equal(t, int64(3), ctx.Limit)
-			assert.True(t, ctx.Remaining == 0)
-			assert.True(t, math.Ceil(time.Since(time.Unix(ctx.Reset, 0)).Seconds()) <= 60)
-		}
-
-		i++
-	}
+	testLimiter(t, store, rate)
 }
 
 // TestLimiterRedis tests Limiter with Redis store.
@@ -45,24 +42,37 @@ func TestLimiterRedis(t *testing.T) {
 	rate, err := NewRateFromFormatted("3-M")
 	assert.Nil(t, err)
 
+	randPrefix := RandStringRunes(10)
 	store, err := NewRedisStoreWithOptions(
 		newRedisPool(),
-		StoreOptions{Prefix: "limitertests:redis", MaxRetry: 3})
+		StoreOptions{Prefix: "limitertests:redis_" + randPrefix, MaxRetry: 3})
 
 	assert.Nil(t, err)
 
+	testLimiter(t, store, rate)
+}
+
+func testLimiter(t *testing.T, store Store, rate Rate) {
 	limiter := NewLimiter(store, rate)
 
 	i := 1
 	for i <= 5 {
+		if i <= 3 {
+			ctx, err := limiter.Peek("boo")
+			assert.NoError(t, err)
+			assert.Equal(t, int64(3-(i-1)), ctx.Remaining)
+		}
+
 		ctx, err := limiter.Get("boo")
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 
 		if i <= 3 {
 			assert.Equal(t, int64(3), ctx.Limit)
 			assert.Equal(t, int64(3-i), ctx.Remaining)
 			assert.True(t, math.Ceil(time.Since(time.Unix(ctx.Reset, 0)).Seconds()) <= 60)
-
+			ctx, err := limiter.Peek("boo")
+			assert.NoError(t, err)
+			assert.Equal(t, int64(3-i), ctx.Remaining)
 		} else {
 			assert.Equal(t, int64(3), ctx.Limit)
 			assert.True(t, ctx.Remaining == 0)
@@ -71,6 +81,7 @@ func TestLimiterRedis(t *testing.T) {
 
 		i++
 	}
+
 }
 
 // -----------------------------------------------------------------------------
