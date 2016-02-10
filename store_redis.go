@@ -81,6 +81,13 @@ func (s RedisStore) updateRate(c redis.Conn, key string, rate Rate) ([]int, erro
 	return redis.Ints(c.Do("EXEC"))
 }
 
+func (s RedisStore) getRate(c redis.Conn, key string, rate Rate) ([]int, error) {
+	c.Send("MULTI")
+	c.Send("GET", key)
+	c.Send("TTL", key)
+	return redis.Ints(c.Do("EXEC"))
+}
+
 // Get returns the limit for the identifier.
 func (s RedisStore) Get(key string, rate Rate) (Context, error) {
 	var (
@@ -121,6 +128,58 @@ func (s RedisStore) Get(key string, rate Rate) (Context, error) {
 	values, err = s.do(s.updateRate, c, key, rate)
 	if err != nil {
 		return ctx, err
+	}
+
+	count := int64(values[0])
+	ttl := int64(values[1])
+	remaining := int64(0)
+
+	if count < rate.Limit {
+		remaining = rate.Limit - count
+	}
+
+	return Context{
+		Limit:     rate.Limit,
+		Remaining: remaining,
+		Reset:     time.Now().Add(time.Duration(ttl) * time.Second).Unix(),
+		Reached:   count > rate.Limit,
+	}, nil
+}
+
+// Peek returns the limit for the identifier.
+func (s RedisStore) Peek(key string, rate Rate) (Context, error) {
+	var (
+		err    error
+		values []int
+	)
+
+	ctx := Context{}
+	key = fmt.Sprintf("%s:%s", s.Prefix, key)
+
+	c := s.Pool.Get()
+	defer c.Close()
+	if err := c.Err(); err != nil {
+		return Context{}, err
+	}
+
+	c.Do("WATCH", key)
+	defer c.Do("UNWATCH", key)
+
+	values, err = s.do(s.getRate, c, key, rate)
+	if err != nil {
+		return ctx, err
+	}
+
+	created := (values[0] == 0)
+	ms := int64(time.Millisecond)
+
+	if created {
+		return Context{
+			Limit:     rate.Limit,
+			Remaining: rate.Limit,
+			Reset:     (time.Now().UnixNano()/ms + int64(rate.Period)/ms) / 1000,
+			Reached:   false,
+		}, nil
 	}
 
 	count := int64(values[0])

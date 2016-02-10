@@ -53,17 +53,47 @@ func (s *MemoryStore) Get(key string, rate Rate) (Context, error) {
 		return ctx, err
 	}
 
+	return s.getContextFromState(now, rate, item.Expiration, count), nil
+}
+
+// Peek implement Store.Peek() method.
+func (s *MemoryStore) Peek(key string, rate Rate) (Context, error) {
+	ctx := Context{}
+	key = fmt.Sprintf("%s:%s", s.Prefix, key)
+	item, found := s.Cache.Items()[key]
+	ms := int64(time.Millisecond)
+	now := time.Now()
+
+	if !found || item.Expired() {
+		// new or expired should show what the values "would" be but not set cache state
+		return Context{
+			Limit:     rate.Limit,
+			Remaining: rate.Limit,
+			Reset:     (now.UnixNano()/ms + int64(rate.Period)/ms) / 1000,
+			Reached:   false,
+		}, nil
+	}
+
+	count, ok := item.Object.(int64)
+	if !ok {
+		return ctx, fmt.Errorf("key=%s count not int64", key)
+	}
+
+	return s.getContextFromState(now, rate, item.Expiration, count), nil
+}
+
+func (s *MemoryStore) getContextFromState(now time.Time, rate Rate, expiration, count int64) Context {
 	remaining := int64(0)
 	if count < rate.Limit {
 		remaining = rate.Limit - count
 	}
 
-	expire := time.Unix(0, item.Expiration)
+	expire := time.Unix(0, expiration)
 
 	return Context{
 		Limit:     rate.Limit,
 		Remaining: remaining,
 		Reset:     expire.Add(time.Duration(expire.Sub(now).Seconds()) * time.Second).Unix(),
 		Reached:   count > rate.Limit,
-	}, nil
+	}
 }
