@@ -1,6 +1,6 @@
 # Limiter
 
-[![Build Status](https://travis-ci.org/ulule/limiter.svg)](https://travis-ci.org/ulule/limiter)
+[![Build Status](https://travis-ci.org/ulule/limiter.svg)](https://travis-ci.org/ulule/limiter) [![Go Report Card](https://goreportcard.com/badge/github.com/ulule/limiter)](https://goreportcard.com/report/github.com/ulule/limiter)
 
 *Dead simple rate limit middleware for Go.*
 
