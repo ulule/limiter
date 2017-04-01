@@ -122,7 +122,7 @@ and `X-Ratelimit-*` headers for `n reqs/duration`.
 only one middleware for [Gin][4] framework and too Redis-coupled. We rather
 prefer to use a "store" approach.
 
-3. [Tollbooth][5]. Good one too but does both too much and too less. It limits by
+3. [Tollbooth][5]. Good one too but does both too much and too little. It limits by
 remote IP, path, methods, custom headers and basic auth usernames... but does not
 provide any Redis support (only *in-memory*) and a ready-to-go middleware that sets
 `X-Ratelimit-*` headers. `tollbooth.LimitByRequest(limiter, r)` only returns an HTTP
