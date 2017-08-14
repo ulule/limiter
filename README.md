@@ -1,6 +1,9 @@
 # Limiter
 
-[![Build Status](https://travis-ci.org/ulule/limiter.svg)](https://travis-ci.org/ulule/limiter) [![Go Report Card](https://goreportcard.com/badge/github.com/ulule/limiter)](https://goreportcard.com/report/github.com/ulule/limiter)
+[![Documentation][godoc-img]][godoc-url]
+![License][license-img]
+[![Build Status][travis-img]][travis-url]
+[![Go Report Card][goreport-img]][goreport-url]
 
 *Dead simple rate limit middleware for Go.*
 
@@ -151,3 +154,11 @@ Don't hesitate ;)
 [4]: https://github.com/gin-gonic/gin
 [5]: https://github.com/didip/tollbooth
 [6]: https://github.com/r8k/ratelimit
+
+[godoc-url]: https://godoc.org/github.com/ulule/limiter
+[godoc-img]: https://godoc.org/github.com/ulule/limiter?status.svg
+[license-img]: https://img.shields.io/badge/license-MIT-blue.svg
+[travis-url]: https://travis-ci.org/ulule/limiter
+[travis-img]: https://travis-ci.org/ulule/limiter.svg?branch=master
+[goreport-url]: https://goreportcard.com/report/github.com/ulule/limiter
+[goreport-img]: https://goreportcard.com/badge/github.com/ulule/limiter
