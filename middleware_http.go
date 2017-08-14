@@ -11,7 +11,7 @@ type HTTPMiddleware struct {
 	Limiter *Limiter
 }
 
-// NewHTTPMiddleware return a new instance of go-json-rest middleware.
+// NewHTTPMiddleware return a new instance of a basic HTTP middleware.
 func NewHTTPMiddleware(limiter *Limiter) *HTTPMiddleware {
 	return &HTTPMiddleware{Limiter: limiter}
 }
