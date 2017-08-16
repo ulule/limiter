@@ -3,3 +3,7 @@
 [[constraint]]
   name = "github.com/patrickmn/go-cache"
   revision = "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0"
+
+[[constraint]]
+  name = "github.com/pkg/errors"
+  version = "0.8.0"
