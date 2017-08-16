@@ -11,17 +11,17 @@ import (
 // TestRate tests Rate methods.
 func TestRate(t *testing.T) {
 	expected := map[string]Rate{
-		"10-S": Rate{
+		"10-S": {
 			Formatted: "10-S",
 			Period:    1 * time.Second,
 			Limit:     int64(10),
 		},
-		"356-M": Rate{
+		"356-M": {
 			Formatted: "356-M",
 			Period:    1 * time.Minute,
 			Limit:     int64(356),
 		},
-		"3-H": Rate{
+		"3-H": {
 			Formatted: "3-H",
 			Period:    1 * time.Hour,
 			Limit:     int64(3),
