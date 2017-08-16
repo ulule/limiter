@@ -4,4 +4,7 @@ cleandb:
 	@(redis-cli KEYS "limitertests:*" | xargs redis-cli DEL)
 
 test: cleandb
-	@(go test -v -run ^Test)
+	@(scripts/test)
+
+lint:
+	@(scripts/lint)

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -eo pipefail
+
+for package in $(go list ./... | grep -v -E '\/(vendor|examples)\/')
+do
+    path="${GOPATH}/src/${package}"
+    echo "[gometalinter] ${package}"
+    gometalinter --config gometalinter.json --disable=dupl "${path}"
+done
