@@ -1,11 +1,16 @@
 package limiter
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 // Store is the common interface for limiter stores.
 type Store interface {
-	Get(key string, rate Rate) (Context, error)
-	Peek(key string, rate Rate) (Context, error)
+	// Get returns the limit for given identifier.
+	Get(ctx context.Context, key string, rate Rate) (Context, error)
+	// Peek returns the limit for given identifier, without modification on current values.
+	Peek(ctx context.Context, key string, rate Rate) (Context, error)
 }
 
 // StoreOptions are options for store.
