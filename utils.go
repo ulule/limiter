@@ -10,15 +10,15 @@ import (
 
 // GetIP returns IP address from request.
 func GetIP(r *http.Request) net.IP {
-	if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
+	ip := r.Header.Get("X-Forwarded-For")
+	if ip != "" {
 		parts := strings.Split(ip, ",")
-		for i, part := range parts {
-			parts[i] = strings.TrimSpace(part)
-		}
-		return net.ParseIP(parts[0])
+		part := strings.TrimSpace(parts[0])
+		return net.ParseIP(part)
 	}
 
-	if ip := r.Header.Get("X-Real-IP"); ip != "" {
+	ip = r.Header.Get("X-Real-IP")
+	if ip != "" {
 		return net.ParseIP(ip)
 	}
 
