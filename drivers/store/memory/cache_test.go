@@ -59,13 +59,13 @@ func TestCacheIncrementConcurrent(t *testing.T) {
 	for i := 0; i < goroutines; i++ {
 		go func(i int) {
 			if (i % 3) == 0 {
-				time.Sleep(600 * time.Millisecond)
+				time.Sleep(2 * time.Second)
 				for j := 0; j < ops; j++ {
-					cache.Increment(key, int64(i+j), (200 * time.Millisecond))
+					cache.Increment(key, int64(i+j), (1 * time.Second))
 				}
 			} else {
 				time.Sleep(50 * time.Millisecond)
-				stopAt := time.Now().Add(400 * time.Millisecond)
+				stopAt := time.Now().Add(500 * time.Millisecond)
 				for time.Now().Before(stopAt) {
 					cache.Increment(key, int64(i), (75 * time.Millisecond))
 				}
