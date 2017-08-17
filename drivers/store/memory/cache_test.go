@@ -38,8 +38,8 @@ func TestCacheIncrementSequential(t *testing.T) {
 func TestCacheIncrementConcurrent(t *testing.T) {
 	is := require.New(t)
 
-	goroutines := 1000
-	ops := 1500
+	goroutines := 500
+	ops := 500
 
 	expected := int64(0)
 	for i := 0; i < goroutines; i++ {

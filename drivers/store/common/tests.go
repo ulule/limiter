@@ -25,14 +25,14 @@ func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 
 		if i <= 3 {
 
-			lctx, err := limiter.Peek(ctx, "boo")
+			lctx, err := limiter.Peek(ctx, "foo")
 			is.NoError(err)
 			is.NotZero(lctx)
 			is.Equal(int64(3-(i-1)), lctx.Remaining)
 
 		}
 
-		lctx, err := limiter.Get(ctx, "boo")
+		lctx, err := limiter.Get(ctx, "foo")
 		is.NoError(err)
 		is.NotZero(lctx)
 
@@ -42,7 +42,7 @@ func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 			is.Equal(int64(3-i), lctx.Remaining)
 			is.True(math.Ceil(time.Since(time.Unix(lctx.Reset, 0)).Seconds()) <= 60)
 
-			lctx, err := limiter.Peek(ctx, "boo")
+			lctx, err := limiter.Peek(ctx, "foo")
 			is.NoError(err)
 			is.Equal(int64(3-i), lctx.Remaining)
 
@@ -66,11 +66,11 @@ func TestStoreConcurrentAccess(t *testing.T, store limiter.Store) {
 	})
 
 	wg := &sync.WaitGroup{}
-	for i := 0; i < 8000; i++ {
+	for i := 0; i < 1000; i++ {
 		wg.Add(1)
 		go func(i int) {
-			for j := 0; j < 1000; j++ {
-				lctx, err := limiter.Get(ctx, "boo")
+			for j := 0; j < 500; j++ {
+				lctx, err := limiter.Get(ctx, "foo")
 				is.NoError(err)
 				is.NotZero(lctx)
 			}
