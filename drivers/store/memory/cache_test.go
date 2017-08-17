@@ -58,7 +58,18 @@ func TestCacheIncrementConcurrent(t *testing.T) {
 
 	for i := 0; i < goroutines; i++ {
 		go func(i int) {
-			doCacheIncrement(cache, key, ops, i)
+			if (i % 3) == 0 {
+				time.Sleep(600 * time.Millisecond)
+				for j := 0; j < ops; j++ {
+					cache.Increment(key, int64(i+j), (200 * time.Millisecond))
+				}
+			} else {
+				time.Sleep(50 * time.Millisecond)
+				stopAt := time.Now().Add(400 * time.Millisecond)
+				for time.Now().Before(stopAt) {
+					cache.Increment(key, int64(i), (75 * time.Millisecond))
+				}
+			}
 			wg.Done()
 		}(i)
 	}
@@ -67,28 +78,6 @@ func TestCacheIncrementConcurrent(t *testing.T) {
 	value, expire := cache.Get(key, (100 * time.Millisecond))
 	is.Equal(expected, value)
 	is.True(time.Now().Before(expire))
-}
-
-func doCacheIncrement(cache *memory.CacheWrapper, key string, ops, i int) {
-	switch i % 3 {
-	case 0:
-		time.Sleep(400 * time.Millisecond)
-		for j := 0; j < ops; j++ {
-			cache.Increment(key, int64(i+j), (200 * time.Millisecond))
-		}
-	case 1:
-		time.Sleep(50 * time.Millisecond)
-		stopAt := time.Now().Add(150 * time.Millisecond)
-		for time.Now().Before(stopAt) {
-			cache.Increment(key, int64(i), (75 * time.Millisecond))
-		}
-	default:
-		stopAt := time.Now().Add(300 * time.Millisecond)
-		time.Sleep(200 * time.Millisecond)
-		for time.Now().Before(stopAt) {
-			cache.Increment(key, int64(42), (10 * time.Millisecond))
-		}
-	}
 }
 
 func TestCacheGet(t *testing.T) {
