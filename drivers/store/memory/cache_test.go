@@ -1,0 +1,102 @@
+package memory_test
+
+import (
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/ulule/limiter/drivers/store/memory"
+)
+
+func TestCacheIncrementSequential(t *testing.T) {
+	is := require.New(t)
+
+	key := "foobar"
+	cache := memory.NewCache(10 * time.Nanosecond)
+	duration := 50 * time.Millisecond
+	deleted := time.Now().Add(duration).UnixNano()
+	epsilon := 0.001
+
+	x, expire := cache.Increment(key, 1, duration)
+	is.Equal(int64(1), x)
+	is.InEpsilon(deleted, expire.UnixNano(), epsilon)
+
+	x, expire = cache.Increment(key, 2, duration)
+	is.Equal(int64(3), x)
+	is.InEpsilon(deleted, expire.UnixNano(), epsilon)
+
+	time.Sleep(duration)
+
+	deleted = time.Now().Add(duration).UnixNano()
+	x, expire = cache.Increment(key, 1, duration)
+	is.Equal(int64(1), x)
+	is.InEpsilon(deleted, expire.UnixNano(), epsilon)
+}
+
+func TestCacheIncrementConcurrent(t *testing.T) {
+	is := require.New(t)
+
+	goroutines := 1000
+	ops := 1500
+
+	expected := int64(0)
+	for i := 0; i < goroutines; i++ {
+		if (i % 3) == 0 {
+			for j := 0; j < ops; j++ {
+				expected += int64(i + j)
+			}
+		}
+	}
+
+	key := "foobar"
+	cache := memory.NewCache(10 * time.Nanosecond)
+
+	wg := &sync.WaitGroup{}
+	wg.Add(goroutines)
+
+	for i := 0; i < goroutines; i++ {
+		go func(i int) {
+			switch i % 3 {
+			case 0:
+				time.Sleep(250 * time.Millisecond)
+				for j := 0; j < ops; j++ {
+					cache.Increment(key, int64(i+j), (200 * time.Millisecond))
+				}
+			case 1:
+				stopAt := time.Now().Add(100 * time.Millisecond)
+				for time.Now().Before(stopAt) {
+					cache.Increment(key, int64(i), (75 * time.Millisecond))
+				}
+			default:
+				stopAt := time.Now().Add(200 * time.Millisecond)
+				time.Sleep(100 * time.Millisecond)
+				for time.Now().Before(stopAt) {
+					cache.Increment(key, int64(42), (10 * time.Millisecond))
+				}
+			}
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+
+	value, expire := cache.Get(key, (100 * time.Millisecond))
+	is.Equal(expected, value)
+	is.True(time.Now().Before(expire))
+}
+
+func TestCacheGet(t *testing.T) {
+	is := require.New(t)
+
+	key := "foobar"
+	cache := memory.NewCache(10 * time.Nanosecond)
+	duration := 50 * time.Millisecond
+	deleted := time.Now().Add(duration).UnixNano()
+	epsilon := 0.001
+
+	x, expire := cache.Get(key, duration)
+	is.Equal(int64(0), x)
+	is.InEpsilon(deleted, expire.UnixNano(), epsilon)
+
+}
