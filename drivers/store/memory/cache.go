@@ -62,6 +62,7 @@ func (counter Counter) Expired() bool {
 	return time.Now().UnixNano() > counter.Expiration
 }
 
+// Cache contains a collection of counters.
 type Cache struct {
 	mutex    sync.RWMutex
 	counters map[string]Counter
@@ -85,13 +86,15 @@ func NewCache(cleanInterval time.Duration) *CacheWrapper {
 	return wrapper
 }
 
+// Increment increments given value on key.
+// If key is undefined or expired, it will create it.
 func (cache *Cache) Increment(key string, value int64, duration time.Duration) (int64, time.Time) {
 	cache.mutex.Lock()
 
 	counter, ok := cache.counters[key]
 	if !ok || counter.Expired() {
 		expiration := time.Now().Add(duration).UnixNano()
-		counter := Counter{
+		counter = Counter{
 			Value:      value,
 			Expiration: expiration,
 		}
@@ -112,6 +115,7 @@ func (cache *Cache) Increment(key string, value int64, duration time.Duration) (
 	return value, time.Unix(0, expiration)
 }
 
+// Get returns key's value and expiration.
 func (cache *Cache) Get(key string, duration time.Duration) (int64, time.Time) {
 	cache.mutex.RLock()
 
@@ -129,6 +133,7 @@ func (cache *Cache) Get(key string, duration time.Duration) (int64, time.Time) {
 	return value, time.Unix(0, expiration)
 }
 
+// Clean will deleted any expired keys.
 func (cache *Cache) Clean() {
 	now := time.Now().UnixNano()
 

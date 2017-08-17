@@ -22,7 +22,10 @@ func TestHTTPMiddleware(t *testing.T) {
 	is.NotNil(request)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello"))
+		_, thr := w.Write([]byte("hello"))
+		if thr != nil {
+			panic(thr)
+		}
 	})
 
 	store := memory.NewStore()

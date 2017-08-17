@@ -12,6 +12,7 @@ import (
 	"github.com/ulule/limiter"
 )
 
+// TestStoreSequentialAccess verify that store works as expected with a sequential access.
 func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 	is := require.New(t)
 	ctx := context.Background()
@@ -42,7 +43,7 @@ func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 			is.Equal(int64(3-i), lctx.Remaining)
 			is.True(math.Ceil(time.Since(time.Unix(lctx.Reset, 0)).Seconds()) <= 60)
 
-			lctx, err := limiter.Peek(ctx, "foo")
+			lctx, err = limiter.Peek(ctx, "foo")
 			is.NoError(err)
 			is.Equal(int64(3-i), lctx.Remaining)
 
@@ -56,6 +57,7 @@ func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 	}
 }
 
+// TestStoreConcurrentAccess verify that store works as expected with a concurrent access.
 func TestStoreConcurrentAccess(t *testing.T, store limiter.Store) {
 	is := require.New(t)
 	ctx := context.Background()
