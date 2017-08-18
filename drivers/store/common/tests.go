@@ -64,14 +64,17 @@ func TestStoreConcurrentAccess(t *testing.T, store limiter.Store) {
 
 	limiter := limiter.New(store, limiter.Rate{
 		Limit:  100000,
-		Period: 5 * time.Nanosecond,
+		Period: 10 * time.Minute,
 	})
 
+	goroutines := 100
+	ops := 200
+
 	wg := &sync.WaitGroup{}
-	for i := 0; i < 1000; i++ {
-		wg.Add(1)
+	wg.Add(goroutines)
+	for i := 0; i < goroutines; i++ {
 		go func(i int) {
-			for j := 0; j < 500; j++ {
+			for j := 0; j < ops; j++ {
 				lctx, err := limiter.Get(ctx, "foo")
 				is.NoError(err)
 				is.NotZero(lctx)
