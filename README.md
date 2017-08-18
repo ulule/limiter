@@ -10,7 +10,7 @@
 * Simple API
 * "Store" approach for backend
 * Redis support (but not tied too)
-* Middlewares: HTTP and [go-json-rest][2]
+* Middlewares: HTTP and [Gin][4]
 
 ## Installation
 
@@ -22,20 +22,22 @@ $ go get github.com/ulule/limiter
 
 In five steps:
 
-* Create a `limiter.Rate` instance (the number of requests per period)
-* Create a `limiter.Store` instance (see [store_redis](https://github.com/ulule/limiter/blob/master/store_redis.go) for Redis or [store_memory](https://github.com/ulule/limiter/blob/master/store_memory.go) for in-memory)
+* Create a `limiter.Rate` instance _(the number of requests per period)_
+* Create a `limiter.Store` instance _(see [Redis](https://github.com/ulule/limiter/blob/master/drivers/store/redis/store.go) or [In-Memory](https://github.com/ulule/limiter/blob/master/drivers/store/memory/store.go))_
 * Create a `limiter.Limiter` instance that takes store and rate instances as arguments
 * Create a middleware instance using the middleware of your choice
 * Give the limiter instance to your middleware initializer
 
-Example:
+**Example:**
 
 ```go
 // Create a rate with the given limit (number of requests) for the given
 // period (a time.Duration of your choice).
+import "github.com/ulule/limiter"
+
 rate := limiter.Rate{
     Period: 1 * time.Hour,
-    Limit:  int64(1000),
+    Limit:  1000,
 }
 
 // You can also use the simplified format "<limit>-<period>"", with the given
@@ -60,34 +62,39 @@ if err != nil {
 // compliant to limiter.Store interface will do the job. The defaults are
 // "limiter" as Redis key prefix and a maximum of 3 retries for the key under
 // race condition.
-store, err := limiter.NewRedisStore(pool)
+import "github.com/ulule/limiter/drivers/store/redis"
+
+store, err := redis.NewStore(client)
 if err != nil {
     panic(err)
 }
 
 // Alternatively, you can pass options to the store with the "WithOptions"
 // function. For example, for Redis store:
-store, err := limiter.NewRedisStoreWithOptions(pool, limiter.StoreOptions{
+import "github.com/ulule/limiter/drivers/store/redis"
+
+store, err := redis.NewStoreWithOptions(pool, limiter.StoreOptions{
     Prefix:   "your_own_prefix",
     MaxRetry: 4,
 })
-
 if err != nil {
     panic(err)
 }
 
-// Or use a in-memory store with a goroutine which clears expired keys every 30 seconds
-store := limiter.NewMemoryStore("prefix_for_keys", 30*time.Second)
+// Or use a in-memory store with a goroutine which clears expired keys.
+import "github.com/ulule/limiter/drivers/store/memory"
+
+store := memory.NewStore()
 
 // Then, create the limiter instance which takes the store and the rate as arguments.
 // Now, you can give this instance to any supported middleware.
-limiterInstance := limiter.NewLimiter(store, rate)
+instance := limiter.New(store, rate)
 ```
 
 See middleware examples:
 
-* [HTTP](https://github.com/ulule/limiter/tree/master/examples/http)
-* [go-json-rest](https://github.com/ulule/limiter/tree/master/examples/gjr)
+* [HTTP](https://github.com/ulule/limiter/tree/master/examples/http/main.go)
+* [Gin](https://github.com/ulule/limiter/tree/master/examples/gin/main.go)
 
 ## How it works
 
@@ -98,10 +105,10 @@ value with an expiration period.
 
 You will find two stores:
 
-* RedisStore: rely on [TTL](http://redis.io/commands/ttl) and incrementing the rate limit on each request
-* MemoryStore: rely on [go-cache](https://github.com/patrickmn/go-cache) with a goroutine to clear expired keys using a default interval
+* Redis: rely on [TTL](http://redis.io/commands/ttl) and incrementing the rate limit on each request.
+* In-Memory: rely on a fork of [go-cache](https://github.com/patrickmn/go-cache) with a goroutine to clear expired keys using a default interval.
 
-When the limit is reached, a ``429`` HTTP code is sent.
+When the limit is reached, a `429` HTTP status code is sent.
 
 ## Why Yet Another Package
 
@@ -118,7 +125,7 @@ number of bytes uploaded"*. It is brillant in term of algorithm but
 documentation is quite unclear at the moment, we don't need *burst* feature for
 now, impossible to get a correct `After-Retry` (when limit exceeds, we can still
 make a few requests, because of the max burst) and it only supports ``http.Handler``
-middleware (we use [go-json-rest][2]). Currently, we only need to return `429`
+middleware (we use [Gin][4]). Currently, we only need to return `429`
 and `X-Ratelimit-*` headers for `n reqs/duration`.
 
 2. [Speedbump][3]. Good package but maybe too lightweight. No `Reset` support,
@@ -131,7 +138,7 @@ provide any Redis support (only *in-memory*) and a ready-to-go middleware that s
 `X-Ratelimit-*` headers. `tollbooth.LimitByRequest(limiter, r)` only returns an HTTP
 code.
 
-4. [ratelimit][6]. Probably the closer to our needs but, once again, too
+4. [ratelimit][2]. Probably the closer to our needs but, once again, too
 lightweight, no middleware available and not active (last commit was in August
 2014). Some parts of code (Redis) comes from this project. It should deserve much
 more love.
@@ -142,18 +149,20 @@ create yet another one.
 
 ## Contributing
 
-* Ping us on twitter [@oibafsellig](https://twitter.com/oibafsellig), [@thoas](https://twitter.com/thoas)
+* Ping us on twitter:
+  * [@oibafsellig](https://twitter.com/oibafsellig)
+  * [@thoas](https://twitter.com/thoas)
+  * [@novln_](https://twitter.com/novln_)
 * Fork the [project](https://github.com/ulule/limiter)
 * Fix [bugs](https://github.com/ulule/limiter/issues)
 
 Don't hesitate ;)
 
 [1]: https://github.com/throttled/throttled
-[2]: https://github.com/ant0ine/go-json-rest
+[2]: https://github.com/r8k/ratelimit
 [3]: https://github.com/etcinit/speedbump
 [4]: https://github.com/gin-gonic/gin
 [5]: https://github.com/didip/tollbooth
-[6]: https://github.com/r8k/ratelimit
 
 [godoc-url]: https://godoc.org/github.com/ulule/limiter
 [godoc-img]: https://godoc.org/github.com/ulule/limiter?status.svg
