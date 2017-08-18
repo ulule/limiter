@@ -5,10 +5,10 @@ import (
 	"log"
 	"net/http"
 
-	libredis "github.com/go-redis/redis"
+	redis "github.com/go-redis/redis"
 	"github.com/ulule/limiter"
 	"github.com/ulule/limiter/drivers/middleware/stdlib"
-	"github.com/ulule/limiter/drivers/store/redis"
+	sredis "github.com/ulule/limiter/drivers/store/redis"
 )
 
 func main() {
@@ -21,15 +21,15 @@ func main() {
 	}
 
 	// Create a redis client.
-	option, err := libredis.ParseURL("redis://localhost:6379/0")
+	option, err := redis.ParseURL("redis://localhost:6379/0")
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	client := libredis.NewClient(option)
+	client := redis.NewClient(option)
 
 	// Create a store with the redis client.
-	store, err := redis.NewStoreWithOptions(client, limiter.StoreOptions{
+	store, err := sredis.NewStoreWithOptions(client, limiter.StoreOptions{
 		Prefix:   "limiter_http_example",
 		MaxRetry: 3,
 	})
