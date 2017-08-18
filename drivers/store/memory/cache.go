@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+// Forked from https://github.com/patrickmn/go-cache
+
 // CacheWrapper is used to ensure that the underlying cleaner goroutine used to clean expired keys will not prevent
 // Cache from being garbage collected.
 type CacheWrapper struct {
