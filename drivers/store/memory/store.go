@@ -10,8 +10,10 @@ import (
 
 // Store is the in-memory store.
 type Store struct {
+	// Prefix used for the key.
 	Prefix string
-	cache  *CacheWrapper
+	// cache used to store values in-memory.
+	cache *CacheWrapper
 }
 
 // NewStore creates a new instance of memory store with defaults.
