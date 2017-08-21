@@ -277,7 +277,7 @@ func (store *Store) getContextFromState(now time.Time, rate limiter.Rate,
 		reached = false
 	}
 
-	reset := expiration.Add(time.Duration(expiration.Sub(now).Seconds()) * time.Second).Unix()
+	reset := expiration.Unix()
 
 	return limiter.Context{
 		Limit:     limit,
