@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/ulule/limiter"
+	"github.com/ulule/limiter/drivers/store/common"
 )
 
 // Client is an interface thats allows to use a redis cluster or a redis single client seamlessly.
@@ -75,7 +76,7 @@ func (store *Store) Get(ctx context.Context, key string, rate limiter.Rate) (lim
 
 		if created {
 			expiration := now.Add(rate.Period)
-			lctx = store.getContextFromState(now, rate, expiration, 1)
+			lctx = common.GetContextFromState(now, rate, expiration, 1)
 			return nil
 		}
 
@@ -89,7 +90,7 @@ func (store *Store) Get(ctx context.Context, key string, rate limiter.Rate) (lim
 			expiration = now.Add(ttl)
 		}
 
-		lctx = store.getContextFromState(now, rate, expiration, count)
+		lctx = common.GetContextFromState(now, rate, expiration, count)
 		return nil
 	}
 
@@ -119,7 +120,7 @@ func (store *Store) Peek(ctx context.Context, key string, rate limiter.Rate) (li
 			expiration = now.Add(ttl)
 		}
 
-		lctx = store.getContextFromState(now, rate, expiration, count)
+		lctx = common.GetContextFromState(now, rate, expiration, count)
 		return nil
 	}
 
@@ -135,7 +136,7 @@ func (store *Store) Peek(ctx context.Context, key string, rate limiter.Rate) (li
 // doPeekValue will execute peekValue with a retry mecanism (optimistic locking) until store.MaxRetry is reached.
 func (store *Store) doPeekValue(rtx *libredis.Tx, key string) (int64, time.Duration, error) {
 	for i := 0; i < store.MaxRetry; i++ {
-		count, ttl, err := store.peekValue(rtx, key)
+		count, ttl, err := peekValue(rtx, key)
 		if err == nil {
 			return count, ttl, nil
 		}
@@ -144,7 +145,7 @@ func (store *Store) doPeekValue(rtx *libredis.Tx, key string) (int64, time.Durat
 }
 
 // peekValue will retrieve the counter and its expiration for given key.
-func (store *Store) peekValue(rtx *libredis.Tx, key string) (int64, time.Duration, error) {
+func peekValue(rtx *libredis.Tx, key string) (int64, time.Duration, error) {
 	pipe := rtx.Pipeline()
 	value := pipe.Get(key)
 	expire := pipe.PTTL(key)
@@ -170,7 +171,7 @@ func (store *Store) peekValue(rtx *libredis.Tx, key string) (int64, time.Duratio
 // doSetValue will execute setValue with a retry mecanism (optimistic locking) until store.MaxRetry is reached.
 func (store *Store) doSetValue(rtx *libredis.Tx, key string, expiration time.Duration) (bool, error) {
 	for i := 0; i < store.MaxRetry; i++ {
-		created, err := store.setValue(rtx, key, expiration)
+		created, err := setValue(rtx, key, expiration)
 		if err == nil {
 			return created, nil
 		}
@@ -179,14 +180,8 @@ func (store *Store) doSetValue(rtx *libredis.Tx, key string, expiration time.Dur
 }
 
 // setValue will try to initialize a new counter if given key doesn't exists.
-func (store *Store) setValue(rtx *libredis.Tx, key string, expiration time.Duration) (bool, error) {
-	pipe := rtx.Pipeline()
-	value := pipe.SetNX(key, 1, expiration)
-
-	_, err := pipe.Exec()
-	if err != nil {
-		return false, err
-	}
+func setValue(rtx *libredis.Tx, key string, expiration time.Duration) (bool, error) {
+	value := rtx.SetNX(key, 1, expiration)
 
 	created, err := value.Result()
 	if err != nil {
@@ -199,9 +194,8 @@ func (store *Store) setValue(rtx *libredis.Tx, key string, expiration time.Durat
 // doUpdateValue will execute setValue with a retry mecanism (optimistic locking) until store.MaxRetry is reached.
 func (store *Store) doUpdateValue(rtx *libredis.Tx, key string,
 	expiration time.Duration) (int64, time.Duration, error) {
-
 	for i := 0; i < store.MaxRetry; i++ {
-		count, ttl, err := store.updateValue(rtx, key, expiration)
+		count, ttl, err := updateValue(rtx, key, expiration)
 		if err == nil {
 			return count, ttl, nil
 		}
@@ -215,7 +209,7 @@ func (store *Store) doUpdateValue(rtx *libredis.Tx, key string,
 }
 
 // updateValue will try to increment the counter identified by given key.
-func (store *Store) updateValue(rtx *libredis.Tx, key string, expiration time.Duration) (int64, time.Duration, error) {
+func updateValue(rtx *libredis.Tx, key string, expiration time.Duration) (int64, time.Duration, error) {
 	pipe := rtx.Pipeline()
 	value := pipe.Incr(key)
 	expire := pipe.PTTL(key)
@@ -263,26 +257,4 @@ func (store *Store) ping() (bool, error) {
 	}
 
 	return (pong == "PONG"), nil
-}
-
-func (store *Store) getContextFromState(now time.Time, rate limiter.Rate,
-	expiration time.Time, count int64) limiter.Context {
-
-	limit := rate.Limit
-	remaining := int64(0)
-	reached := true
-
-	if count <= limit {
-		remaining = limit - count
-		reached = false
-	}
-
-	reset := expiration.Unix()
-
-	return limiter.Context{
-		Limit:     limit,
-		Remaining: remaining,
-		Reset:     reset,
-		Reached:   reached,
-	}
 }

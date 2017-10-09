@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ulule/limiter"
+	"github.com/ulule/limiter/drivers/store/common"
 )
 
 // Store is the in-memory store.
@@ -39,7 +40,7 @@ func (store *Store) Get(ctx context.Context, key string, rate limiter.Rate) (lim
 
 	count, expiration := store.cache.Increment(key, 1, rate.Period)
 
-	lctx := store.getContextFromState(now, rate, expiration, count)
+	lctx := common.GetContextFromState(now, rate, expiration, count)
 	return lctx, nil
 }
 
@@ -50,28 +51,6 @@ func (store *Store) Peek(ctx context.Context, key string, rate limiter.Rate) (li
 
 	count, expiration := store.cache.Get(key, rate.Period)
 
-	lctx := store.getContextFromState(now, rate, expiration, count)
+	lctx := common.GetContextFromState(now, rate, expiration, count)
 	return lctx, nil
-}
-
-func (store *Store) getContextFromState(now time.Time, rate limiter.Rate,
-	expiration time.Time, count int64) limiter.Context {
-
-	limit := rate.Limit
-	remaining := int64(0)
-	reached := true
-
-	if count <= limit {
-		remaining = limit - count
-		reached = false
-	}
-
-	reset := expiration.Unix()
-
-	return limiter.Context{
-		Limit:     limit,
-		Remaining: remaining,
-		Reset:     reset,
-		Reached:   reached,
-	}
 }
