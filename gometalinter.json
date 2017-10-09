@@ -13,7 +13,6 @@
     "interfacer",
     "deadcode",
     "gocyclo",
-    "vetshadow",
     "golint",
     "goconst",
     "megacheck",
