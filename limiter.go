@@ -1,5 +1,9 @@
 package limiter
 
+import (
+	"context"
+)
+
 // -----------------------------------------------------------------
 // Context
 // -----------------------------------------------------------------
@@ -22,20 +26,20 @@ type Limiter struct {
 	Rate  Rate
 }
 
-// NewLimiter returns an instance of Limiter.
-func NewLimiter(store Store, rate Rate) *Limiter {
+// New returns an instance of Limiter.
+func New(store Store, rate Rate) *Limiter {
 	return &Limiter{
 		Store: store,
 		Rate:  rate,
 	}
 }
 
-// Get returns the limit for the identifier.
-func (l *Limiter) Get(key string) (Context, error) {
-	return l.Store.Get(key, l.Rate)
+// Get returns the limit for given identifier.
+func (limiter *Limiter) Get(ctx context.Context, key string) (Context, error) {
+	return limiter.Store.Get(ctx, key, limiter.Rate)
 }
 
-// Peek returns the limit for identifier without impacting accounting
-func (l *Limiter) Peek(key string) (Context, error) {
-	return l.Store.Peek(key, l.Rate)
+// Peek returns the limit for given identifier, without modification on current values.
+func (limiter *Limiter) Peek(ctx context.Context, key string) (Context, error) {
+	return limiter.Store.Peek(ctx, key, limiter.Rate)
 }

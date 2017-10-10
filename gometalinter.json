@@ -1,0 +1,32 @@
+{
+  "DisableAll": true,
+  "Enable": [
+    "lll",
+    "misspell",
+    "gofmt",
+    "dupl",
+    "ineffassign",
+    "errcheck",
+    "gas",
+    "vet",
+    "unconvert",
+    "interfacer",
+    "deadcode",
+    "gocyclo",
+    "golint",
+    "goconst",
+    "megacheck",
+    "varcheck",
+    "structcheck"
+  ],
+  "EnableGC": true,
+  "Deadline": "1200s",
+  "Concurrency": 1,
+  "Vendor": true,
+  "VendoredLinters": true,
+  "Aggregate": true,
+  "Test": true,
+  "LineLength": 120,
+  "Cyclo": 10,
+  "DuplThreshold": 80
+}

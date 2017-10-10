@@ -1,0 +1,65 @@
+#!/bin/bash
+
+set -eo pipefail
+
+DOCKER_REDIS_PORT=${DOCKER_REDIS_PORT:-26379}
+
+CONTAINER_NAME="limiter-redis"
+CONTAINER_IMAGE="redis:3.2"
+
+do_start() {
+
+    if [[ -n "$(docker ps -q -f name="${CONTAINER_NAME}" 2> /dev/null)" ]]; then
+        echo "[redis] ${CONTAINER_NAME} already started. (use --restart otherwise)"
+        return 0
+    fi
+
+    if [[ -n "$(docker ps -a -q -f name="${CONTAINER_NAME}" 2> /dev/null)" ]]; then
+        echo "[redis] erase previous configuration"
+        docker stop "${CONTAINER_NAME}" >/dev/null 2>&1 || true
+        docker rm "${CONTAINER_NAME}" >/dev/null 2>&1 || true
+    fi
+
+    echo "[redis] update redis images"
+    docker pull ${CONTAINER_IMAGE} || true
+
+    echo "[redis] start new ${CONTAINER_NAME} container"
+    docker run --name "${CONTAINER_NAME}" \
+        -p ${DOCKER_REDIS_PORT}:6379 \
+        -d ${CONTAINER_IMAGE} >/dev/null
+
+}
+
+do_stop() {
+
+    echo "[redis] stop ${CONTAINER_NAME} container"
+    docker stop "${CONTAINER_NAME}" >/dev/null 2>&1 || true
+    docker rm "${CONTAINER_NAME}" >/dev/null 2>&1 || true
+
+}
+
+do_client() {
+
+    echo "[redis] use redis-cli on ${CONTAINER_NAME}"
+    docker run --rm -it \
+        --link "${CONTAINER_NAME}":redis \
+        ${CONTAINER_IMAGE} redis-cli -h redis -p 6379 -n 1
+
+}
+
+case "$1" in
+    --stop)
+        do_stop
+    ;;
+    --restart)
+        do_stop
+        do_start
+    ;;
+    --client)
+        do_client
+    ;;
+    --start | *)
+        do_start
+    ;;
+esac
+exit 0

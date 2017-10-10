@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
-	redis "github.com/go-redis/redis"
+	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis"
 	"github.com/ulule/limiter"
-	"github.com/ulule/limiter/drivers/middleware/stdlib"
+	mgin "github.com/ulule/limiter/drivers/middleware/gin"
 	sredis "github.com/ulule/limiter/drivers/store/redis"
 )
 
@@ -30,7 +30,7 @@ func main() {
 
 	// Create a store with the redis client.
 	store, err := sredis.NewStoreWithOptions(client, limiter.StoreOptions{
-		Prefix:   "limiter_http_example",
+		Prefix:   "limiter_gin_example",
 		MaxRetry: 3,
 	})
 	if err != nil {
@@ -39,16 +39,19 @@ func main() {
 	}
 
 	// Create a new middleware with the limiter instance.
-	middleware := stdlib.NewMiddleware(limiter.New(store, rate))
+	middleware := mgin.NewMiddleware(limiter.New(store, rate))
 
 	// Launch a simple server.
-	http.Handle("/", middleware.Handler(http.HandlerFunc(index)))
-	fmt.Println("Server is running on port 7777...")
-	log.Fatal(http.ListenAndServe(":7777", nil))
-
+	router := gin.Default()
+	router.Use(middleware)
+	router.GET("/", index)
+	log.Fatal(router.Run(":7777"))
 }
 
-func index(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Write([]byte(`{"message": "ok"}`))
+func index(c *gin.Context) {
+	type message struct {
+		Message string `json:"message"`
+	}
+	resp := message{Message: "ok"}
+	c.JSON(http.StatusOK, resp)
 }

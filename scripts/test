@@ -1,0 +1,11 @@
+#!/bin/bash
+
+SOURCE_DIRECTORY=$(dirname "${BASH_SOURCE[0]}")
+cd "${SOURCE_DIRECTORY}/.."
+
+if [ -z "$REDIS_DISABLE_BOOTSTRAP" ]; then
+    export REDIS_URI="redis://localhost:26379/1"
+    scripts/redis --restart
+fi
+
+go test -race -v $(go list ./... | grep -v -E '\/(vendor|examples)\/')

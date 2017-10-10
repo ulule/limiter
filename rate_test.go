@@ -5,23 +5,25 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestRate tests Rate methods.
 func TestRate(t *testing.T) {
+	is := require.New(t)
+
 	expected := map[string]Rate{
-		"10-S": Rate{
+		"10-S": {
 			Formatted: "10-S",
 			Period:    1 * time.Second,
 			Limit:     int64(10),
 		},
-		"356-M": Rate{
+		"356-M": {
 			Formatted: "356-M",
 			Period:    1 * time.Minute,
 			Limit:     int64(356),
 		},
-		"3-H": Rate{
+		"3-H": {
 			Formatted: "3-H",
 			Period:    1 * time.Hour,
 			Limit:     int64(3),
@@ -30,8 +32,8 @@ func TestRate(t *testing.T) {
 
 	for k, v := range expected {
 		r, err := NewRateFromFormatted(k)
-		assert.Nil(t, err)
-		assert.True(t, reflect.DeepEqual(v, r))
+		is.NoError(err)
+		is.True(reflect.DeepEqual(v, r))
 	}
 
 	wrongs := []string{
@@ -44,7 +46,7 @@ func TestRate(t *testing.T) {
 
 	for _, w := range wrongs {
 		_, err := NewRateFromFormatted(w)
-		assert.NotNil(t, err)
+		is.Error(err)
 	}
 
 }
