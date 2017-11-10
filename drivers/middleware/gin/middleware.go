@@ -34,7 +34,7 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) gin.HandlerFunc 
 
 // Handle gin request.
 func (middleware *Middleware) Handle(c *gin.Context) {
-	context, err := middleware.Limiter.Get(c, limiter.GetIPKey(c.Request))
+	context, err := middleware.Limiter.Get(c, c.ClientIP())
 	if err != nil {
 		middleware.OnError(c, err)
 		c.Abort()

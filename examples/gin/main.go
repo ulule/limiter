@@ -43,6 +43,7 @@ func main() {
 
 	// Launch a simple server.
 	router := gin.Default()
+	router.ForwardedByClientIP = true
 	router.Use(middleware)
 	router.GET("/", index)
 	log.Fatal(router.Run(":7777"))
