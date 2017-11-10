@@ -37,34 +37,62 @@ func TestGetIP(t *testing.T) {
 
 	scenarios := []struct {
 		request  *http.Request
+		hasProxy bool
 		expected net.IP
 	}{
 		{
 			//
-			// Scenario #1 : RemoteAddr
+			// Scenario #1 : RemoteAddr without proxy.
 			//
 			request:  request1,
+			hasProxy: false,
 			expected: net.ParseIP("8.8.8.8"),
 		},
 		{
 			//
-			// Scenario #2 : X-Forwarded-For
+			// Scenario #2 : X-Forwarded-For without proxy.
 			//
 			request:  request2,
+			hasProxy: false,
+			expected: net.ParseIP("8.8.8.8"),
+		},
+		{
+			//
+			// Scenario #3 : X-Real-IP without proxy.
+			//
+			request:  request3,
+			hasProxy: false,
+			expected: net.ParseIP("8.8.8.8"),
+		},
+		{
+			//
+			// Scenario #4 : RemoteAddr with proxy.
+			//
+			request:  request1,
+			hasProxy: true,
+			expected: net.ParseIP("8.8.8.8"),
+		},
+		{
+			//
+			// Scenario #5 : X-Forwarded-For with proxy.
+			//
+			request:  request2,
+			hasProxy: true,
 			expected: net.ParseIP("9.9.9.9"),
 		},
 		{
 			//
-			// Scenario #3 : X-Real-IP
+			// Scenario #6 : X-Real-IP with proxy.
 			//
 			request:  request3,
+			hasProxy: true,
 			expected: net.ParseIP("6.6.6.6"),
 		},
 	}
 
 	for i, scenario := range scenarios {
 		message := fmt.Sprintf("Scenario #%d", (i + 1))
-		ip := limiter.GetIP(scenario.request)
+		ip := limiter.GetIP(scenario.request, scenario.hasProxy)
 		is.Equal(scenario.expected, ip, message)
 	}
 }
@@ -94,34 +122,62 @@ func TestGetIPKey(t *testing.T) {
 
 	scenarios := []struct {
 		request  *http.Request
+		hasProxy bool
 		expected string
 	}{
 		{
 			//
-			// Scenario #1 : RemoteAddr
+			// Scenario #1 : RemoteAddr without proxy.
 			//
 			request:  request1,
+			hasProxy: false,
 			expected: "8.8.8.8",
 		},
 		{
 			//
-			// Scenario #2 : X-Forwarded-For
+			// Scenario #2 : X-Forwarded-For without proxy.
 			//
 			request:  request2,
+			hasProxy: false,
+			expected: "8.8.8.8",
+		},
+		{
+			//
+			// Scenario #3 : X-Real-IP without proxy.
+			//
+			request:  request3,
+			hasProxy: false,
+			expected: "8.8.8.8",
+		},
+		{
+			//
+			// Scenario #4 : RemoteAddr without proxy.
+			//
+			request:  request1,
+			hasProxy: true,
+			expected: "8.8.8.8",
+		},
+		{
+			//
+			// Scenario #5 : X-Forwarded-For without proxy.
+			//
+			request:  request2,
+			hasProxy: true,
 			expected: "9.9.9.9",
 		},
 		{
 			//
-			// Scenario #3 : X-Real-IP
+			// Scenario #6 : X-Real-IP without proxy.
 			//
 			request:  request3,
+			hasProxy: true,
 			expected: "6.6.6.6",
 		},
 	}
 
 	for i, scenario := range scenarios {
 		message := fmt.Sprintf("Scenario #%d", (i + 1))
-		key := limiter.GetIPKey(scenario.request)
+		key := limiter.GetIPKey(scenario.request, scenario.hasProxy)
 		is.Equal(scenario.expected, key, message)
 	}
 }
