@@ -8,4 +8,4 @@ if [ -z "$REDIS_DISABLE_BOOTSTRAP" ]; then
     scripts/redis --restart
 fi
 
-go test -race -v $(go list ./... | grep -v -E '\/(vendor|examples)\/')
+go test -count=1 -race -v $(go list ./... | grep -v -E '\/(vendor|examples)\/')
