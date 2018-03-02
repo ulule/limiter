@@ -13,6 +13,7 @@ type Middleware struct {
 	Limiter        *limiter.Limiter
 	OnError        ErrorHandler
 	OnLimitReached LimitReachedHandler
+	KeyGetter      KeyGetter
 }
 
 // NewMiddleware return a new instance of a basic HTTP middleware.
@@ -21,6 +22,7 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) gin.HandlerFunc 
 		Limiter:        limiter,
 		OnError:        DefaultErrorHandler,
 		OnLimitReached: DefaultLimitReachedHandler,
+		KeyGetter:      DefaultKeyGetter,
 	}
 
 	for _, option := range options {
@@ -34,7 +36,8 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) gin.HandlerFunc 
 
 // Handle gin request.
 func (middleware *Middleware) Handle(c *gin.Context) {
-	context, err := middleware.Limiter.Get(c, c.ClientIP())
+	key := middleware.KeyGetter(c)
+	context, err := middleware.Limiter.Get(c, key)
 	if err != nil {
 		middleware.OnError(c, err)
 		c.Abort()

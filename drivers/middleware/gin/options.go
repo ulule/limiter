@@ -46,3 +46,19 @@ func WithLimitReachedHandler(handler LimitReachedHandler) Option {
 func DefaultLimitReachedHandler(c *gin.Context) {
 	c.String(http.StatusTooManyRequests, "Limit exceeded")
 }
+
+// KeyGetter will define the rate limiter key given the gin Context
+type KeyGetter func(c *gin.Context) string
+
+// WithKeyGetter will configure the Middleware to use the given KeyGetter
+func WithKeyGetter(KeyGetter KeyGetter) Option {
+	return option(func(middleware *Middleware) {
+		middleware.KeyGetter = KeyGetter
+	})
+}
+
+// DefaultKeyGetter is the default KeyGetter used by a new Middleware
+// It returns the Client IP address
+func DefaultKeyGetter(c *gin.Context) string {
+	return c.ClientIP()
+}
