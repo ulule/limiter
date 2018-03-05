@@ -3,6 +3,7 @@ package gin_test
 import (
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -94,5 +95,34 @@ func TestHTTPMiddleware(t *testing.T) {
 
 	wg.Wait()
 	is.Equal(success, atomic.LoadInt64(&counter))
+
+	//
+	// Custom KeyGetter
+	//
+
+	store = memory.NewStore()
+	is.NotZero(store)
+
+	j := 0
+	KeyGetter := func(c *libgin.Context) string {
+		j += 1
+		return strconv.Itoa(j)
+	}
+	middleware = gin.NewMiddleware(limiter.New(store, rate), gin.WithKeyGetter(KeyGetter))
+
+	is.NotZero(middleware)
+
+	router = libgin.New()
+	router.Use(middleware)
+	router.GET("/", func(c *libgin.Context) {
+		c.String(http.StatusOK, "hello")
+	})
+
+	for i := int64(1); i <= clients; i++ {
+		resp := httptest.NewRecorder()
+		router.ServeHTTP(resp, request)
+		// We should always be ok as the key changes for each request
+		is.Equal(http.StatusOK, resp.Code, strconv.Itoa(int(i)))
+	}
 
 }
