@@ -1,0 +1,53 @@
+#!/bin/bash
+
+set -eo pipefail
+
+SOURCE_DIRECTORY=$(dirname "${BASH_SOURCE[0]}")
+cd "${SOURCE_DIRECTORY}/.."
+
+ROOT_DIRECTORY=`pwd`
+IMAGE_NAME="limiter-go"
+DOCKERFILE="scripts/conf/go/Dockerfile"
+CONTAINER_IMAGE="golang:1.10.0-stretch"
+
+if [[ -n "$REDIS_DISABLE_BOOTSTRAP" ]]; then
+    REDIS_DISABLE_BOOTSTRAP_OPTS="-e REDIS_DISABLE_BOOTSTRAP=$REDIS_DISABLE_BOOTSTRAP"
+fi
+
+if [[ -n "$REDIS_URI" ]]; then
+    REDIS_URI_OPTS="-e REDIS_URI=$REDIS_URI"
+fi
+
+create_docker_image() {
+    declare tag="$1" dockerfile="$2" path="$3"
+
+    echo "[go-wrapper] update golang image"
+    docker pull ${CONTAINER_IMAGE} || true
+
+    echo "[go-wrapper] build docker image"
+    docker build -f "${dockerfile}" -t "${tag}" "${path}"
+}
+
+do_command() {
+    declare command="$@"
+
+    echo "[go-wrapper] run '${command}' in docker container"
+    docker run --rm --net=host ${REDIS_DISABLE_BOOTSTRAP_OPTS} ${REDIS_URI_OPTS} \
+        "${IMAGE_NAME}" ${command}
+}
+
+do_usage() {
+
+    echo >&2 "Usage: $0 command"
+    exit 255
+
+}
+
+if [ -z "$1" ]; then
+    do_usage
+fi
+
+create_docker_image "${IMAGE_NAME}" "${DOCKERFILE}" "${ROOT_DIRECTORY}"
+do_command "$@"
+
+exit 0
