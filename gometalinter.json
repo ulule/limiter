@@ -16,8 +16,14 @@
     "golint",
     "goconst",
     "megacheck",
+    "maligned",
     "varcheck",
-    "structcheck"
+    "structcheck",
+    "goimports",
+    "gosimple",
+    "gotype",
+    "gotypex",
+    "nakedret"
   ],
   "EnableGC": true,
   "Deadline": "1200s",
@@ -28,5 +34,8 @@
   "Test": true,
   "LineLength": 120,
   "Cyclo": 10,
-  "DuplThreshold": 80
+  "DuplThreshold": 80,
+  "Skip": [
+    "examples"
+  ]
 }

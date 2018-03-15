@@ -59,7 +59,7 @@ func TestCacheIncrementConcurrent(t *testing.T) {
 	for i := 0; i < goroutines; i++ {
 		go func(i int) {
 			if (i % 3) == 0 {
-				time.Sleep(2 * time.Second)
+				time.Sleep(1 * time.Second)
 				for j := 0; j < ops; j++ {
 					cache.Increment(key, int64(i+j), (1 * time.Second))
 				}

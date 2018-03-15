@@ -64,11 +64,11 @@ func TestStoreConcurrentAccess(t *testing.T, store limiter.Store) {
 
 	limiter := limiter.New(store, limiter.Rate{
 		Limit:  100000,
-		Period: 10 * time.Minute,
+		Period: 10 * time.Second,
 	})
 
-	goroutines := 100
-	ops := 200
+	goroutines := 500
+	ops := 500
 
 	wg := &sync.WaitGroup{}
 	wg.Add(goroutines)

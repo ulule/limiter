@@ -1,5 +1,10 @@
 # Gopkg.toml for github.com/ulule/limiter
 
+ignored = [
+  "github.com/stretchr/testify",
+  "github.com/davecgh/go-spew"
+]
+
 [[constraint]]
   name = "github.com/pkg/errors"
   version = "0.8.0"
