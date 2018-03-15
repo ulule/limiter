@@ -40,6 +40,8 @@ func rateLimit(ctx *context.Context) {
 	h.Add("X-RateLimit-Reset", strconv.FormatInt(context.Reset, 10))
 
 	if context.Reached {
+		//This will cause a panic on the logs. To avoid this, add the error string to 
+		//Beego.ErrorMaps as discribed here https://beego.me/docs/mvc/controller/errors.md
 		ctx.Abort(http.StatusTooManyRequests, "Too Many Requests")
 		return
 	}
