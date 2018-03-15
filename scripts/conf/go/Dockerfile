@@ -17,14 +17,13 @@ RUN apt-get -y update \
     && go get github.com/golang/dep/cmd/dep \
     && go get -u -v github.com/stretchr/testify/require \
     && go get -u -v github.com/davecgh/go-spew/spew \
-    && go get -u -v github.com/jmoiron/sqlx \
     && go get -u -v github.com/alecthomas/gometalinter \
     && gometalinter --install \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-COPY . /go/src/github.com/ulule/loukoum
-WORKDIR /go/src/github.com/ulule/loukoum
+COPY . /go/src/github.com/ulule/limiter
+WORKDIR /go/src/github.com/ulule/limiter
 RUN dep ensure
 
 CMD /bin/bash
