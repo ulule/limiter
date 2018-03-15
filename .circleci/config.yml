@@ -1,0 +1,30 @@
+version: 2
+
+jobs:
+  build:
+    machine:
+      image: circleci/classic:edge
+      docker_layer_caching: true
+    steps:
+      - checkout
+      - run:
+          name: Checkout submodules
+          command: |
+            git submodule sync
+            git submodule update --init
+
+      - run:
+          name: Start docker container for redis
+          command: scripts/redis
+
+      - run:
+          name: Run tests
+          command: scripts/go-wrapper scripts/test
+          environment:
+            REDIS_DISABLE_BOOTSTRAP: false
+            REDIS_URI: redis://localhost:26379/1
+
+      - run:
+          name: Run linters
+          command: scripts/go-wrapper scripts/lint
+          no_output_timeout: 10m
