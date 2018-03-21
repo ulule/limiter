@@ -1,5 +1,8 @@
 package main
-
+/*
+More comprehensive example: 
+https://gist.github.com/gadelkareem/5a087bfda1f673241d0ac65759156cfd
+*/
 import (
 	"github.com/astaxie/beego"
 	"github.com/ulule/limiter"
@@ -12,27 +15,27 @@ import (
 )
 
 type rateLimiter struct {
-	GeneralLimiter *limiter.Limiter
-	LoginLimiter   *limiter.Limiter
+	generalLimiter *limiter.Limiter
+	loginLimiter   *limiter.Limiter
 }
 
 func main() {
-	rates := new(rateLimiter)
-	store := memory.NewStore()
-	
+	r := &rateLimiter{}
+
 	rate, err := limiter.NewRateFromFormatted("2-S")
 	PanicOnError(err)
-	rates.GeneralLimiter = limiter.New(store, rate)
+	r.generalLimiter = limiter.New(memory.NewStore(), rate)
 
 	loginRate, err := limiter.NewRateFromFormatted("2-M")
 	PanicOnError(err)
-	rates.LoginLimiter = limiter.New(store, loginRate)
+	r.loginLimiter = limiter.New(memory.NewStore(), loginRate)
 
 	//More on Beego filters here https://beego.me/docs/mvc/controller/filter.md
 	beego.InsertFilter("/*", beego.BeforeRouter, func(c *context.Context) {
-		rateLimit(rates, c)
+		rateLimit(r, c)
 	}, true)
 
+	//refer to https://beego.me/docs/mvc/controller/errors.md for error handling
 	beego.ErrorHandler("429", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusTooManyRequests)
 		w.Write([]byte("Too Many Requests"))
@@ -41,18 +44,19 @@ func main() {
 	beego.Run()
 }
 
-func rateLimit(l *rateLimiter, ctx *context.Context) {
+func rateLimit(r *rateLimiter, ctx *context.Context) {
 	var (
-		context limiter.Context
-		err     error
-		r       = ctx.Request
-		ip      = limiter.GetIPKey(r, false)
+		limiterCtx limiter.Context
+		err        error
+		req        = ctx.Request
 	)
 
+	ip := limiter.GetIP(req, false)
+
 	if strings.HasPrefix(ctx.Input.URL(), "/login") {
-		context, err = l.LoginLimiter.Get(r.Context(), ip)
+		limiterCtx, err = r.loginLimiter.Get(req.Context(), ip.String())
 	} else {
-		context, err = l.GeneralLimiter.Get(r.Context(), ip)
+		limiterCtx, err = r.generalLimiter.Get(req.Context(), ip.String())
 	}
 	if err != nil {
 		ctx.Abort(http.StatusInternalServerError, err.Error())
@@ -60,13 +64,13 @@ func rateLimit(l *rateLimiter, ctx *context.Context) {
 	}
 
 	h := ctx.ResponseWriter.Header()
-	h.Add("X-RateLimit-Limit", strconv.FormatInt(context.Limit, 10))
-	h.Add("X-RateLimit-Remaining", strconv.FormatInt(context.Remaining, 10))
-	h.Add("X-RateLimit-Reset", strconv.FormatInt(context.Reset, 10))
+	h.Add("X-RateLimit-Limit", strconv.FormatInt(limiterCtx.Limit, 10))
+	h.Add("X-RateLimit-Remaining", strconv.FormatInt(limiterCtx.Remaining, 10))
+	h.Add("X-RateLimit-Reset", strconv.FormatInt(limiterCtx.Reset, 10))
 
-	if context.Reached {
+	if limiterCtx.Reached {
 		logs.Debug("Too Many Requests from %s on %s", ip, ctx.Input.URL())
-		//refer to https://beego.me/docs/mvc/controller/errors.md for error handling 
+		//refer to https://beego.me/docs/mvc/controller/errors.md for error handling
 		ctx.Abort(http.StatusTooManyRequests, "429")
 		return
 	}
