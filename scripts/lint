@@ -2,18 +2,17 @@
 
 set -eo pipefail
 
-gometalinter_path="${GOPATH}/bin/gometalinter"
+golinter_path="${GOPATH}/bin/golangci-lint"
 
-if [[ ! -x "${gometalinter_path}" ]]; then
-    go get -u github.com/alecthomas/gometalinter
-    gometalinter --install
+if [[ ! -x "${golinter_path}" ]]; then
+    go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
 fi
 
 SOURCE_DIRECTORY=$(dirname "${BASH_SOURCE[0]}")
 cd "${SOURCE_DIRECTORY}/.."
 
 if [[ -n $1 ]]; then
-    gometalinter --config gometalinter.json --disable=dupl "$1"
+    golangci-lint run "$1"
 else
-    gometalinter --config gometalinter.json --disable=dupl ./...
+    golangci-lint run ./...
 fi
