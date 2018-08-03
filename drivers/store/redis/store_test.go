@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ulule/limiter"
-	"github.com/ulule/limiter/drivers/store/common"
 	"github.com/ulule/limiter/drivers/store/redis"
+	"github.com/ulule/limiter/drivers/store/tests"
 )
 
 func TestRedisStoreSequentialAccess(t *testing.T) {
@@ -26,7 +26,7 @@ func TestRedisStoreSequentialAccess(t *testing.T) {
 	is.NoError(err)
 	is.NotNil(store)
 
-	common.TestStoreSequentialAccess(t, store)
+	tests.TestStoreSequentialAccess(t, store)
 }
 
 func TestRedisStoreConcurrentAccess(t *testing.T) {
@@ -43,7 +43,7 @@ func TestRedisStoreConcurrentAccess(t *testing.T) {
 	is.NoError(err)
 	is.NotNil(store)
 
-	common.TestStoreConcurrentAccess(t, store)
+	tests.TestStoreConcurrentAccess(t, store)
 }
 
 func newRedisClient() (*libredis.Client, error) {
