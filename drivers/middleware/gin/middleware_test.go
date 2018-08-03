@@ -105,7 +105,7 @@ func TestHTTPMiddleware(t *testing.T) {
 
 	j := 0
 	KeyGetter := func(c *libgin.Context) string {
-		j += 1
+		j++
 		return strconv.Itoa(j)
 	}
 	middleware = gin.NewMiddleware(limiter.New(store, rate), gin.WithKeyGetter(KeyGetter))
