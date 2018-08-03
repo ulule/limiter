@@ -33,7 +33,7 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) *Middleware {
 // Handler the middleware handler.
 func (middleware *Middleware) Handler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		context, err := middleware.Limiter.Get(r.Context(), limiter.GetIPKey(r, middleware.TrustForwardHeader))
+		context, err := middleware.Limiter.Get(r.Context(), middleware.Limiter.GetIPKey(r))
 		if err != nil {
 			middleware.OnError(w, r, err)
 			return
