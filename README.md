@@ -10,7 +10,7 @@
 * Simple API
 * "Store" approach for backend
 * Redis support (but not tied too)
-* Middlewares: HTTP and [Gin][4]
+* Middlewares: HTTP, [Gin][4] and [Beego][6]
 
 ## Installation
 
@@ -95,6 +95,7 @@ See middleware examples:
 
 * [HTTP](https://github.com/ulule/limiter/tree/master/examples/http/main.go)
 * [Gin](https://github.com/ulule/limiter/tree/master/examples/gin/main.go)
+* [Beego](https://github.com/ulule/limiter/blob/master/examples/beego/main.go)
 
 ## How it works
 
@@ -163,6 +164,7 @@ Don't hesitate ;)
 [3]: https://github.com/etcinit/speedbump
 [4]: https://github.com/gin-gonic/gin
 [5]: https://github.com/didip/tollbooth
+[6]: https://github.com/astaxie/beego
 
 [godoc-url]: https://godoc.org/github.com/ulule/limiter
 [godoc-img]: https://godoc.org/github.com/ulule/limiter?status.svg
