@@ -39,7 +39,7 @@ func main() {
 	}
 
 	// Create a new middleware with the limiter instance.
-	middleware := stdlib.NewMiddleware(limiter.New(store, rate), stdlib.WithForwardHeader(true))
+	middleware := stdlib.NewMiddleware(limiter.New(store, rate, limiter.WithTrustForwardHeader(true)))
 
 	// Launch a simple server.
 	http.Handle("/", middleware.Handler(http.HandlerFunc(index)))
