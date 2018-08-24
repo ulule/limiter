@@ -95,6 +95,7 @@ See middleware examples:
 
 * [HTTP](https://github.com/ulule/limiter/tree/master/examples/http/main.go)
 * [Gin](https://github.com/ulule/limiter/tree/master/examples/gin/main.go)
+* [Beego](https://github.com/ulule/limiter/blob/master/examples/beego/main.go)
 
 ## How it works
 
