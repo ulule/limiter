@@ -34,8 +34,6 @@ github.com/stretchr/testify v1.2.2 h1:bSDNvY7ZPG5RlJ8otE/7V6gMiyenm9RtJ7IUVIAoJ1
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/ugorji/go v1.1.1 h1:gmervu+jDMvXTbcHQ0pd2wee85nEoE0BsVyEuzkfK8w=
 github.com/ugorji/go v1.1.1/go.mod h1:hnLbHMwcvSihnDhEfx2/BzKp2xb0Y+ErdfYcrs9tkJQ=
-github.com/ulule/limiter v2.2.0+incompatible h1:1SeOVtEtaMckX/1yBlsok6LLZjiUrZ33kF5FITMl3MU=
-github.com/ulule/limiter v2.2.0+incompatible/go.mod h1:VJx/ZNGmClQDS5F6EmsGqK8j3jz1qJYZ6D9+MdAD+kw=
 golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac h1:7d7lG9fHOLdL6jZPtnV4LpI41SbohIJ1Atq7U991dMg=
 golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/net v0.0.0-20180824045131-faa378e6dbae h1:wghBFWo7bWmJJ1nmDDkVEIOBJBT/KMgVsM1iqi/csro=

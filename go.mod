@@ -19,7 +19,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.2.2
 	github.com/ugorji/go v1.1.1 // indirect
-	github.com/ulule/limiter v2.2.0+incompatible
 	golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac // indirect
 	golang.org/x/net v0.0.0-20180824045131-faa378e6dbae // indirect
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
