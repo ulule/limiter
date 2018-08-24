@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ulule/limiter"
-	"github.com/ulule/limiter/drivers/store/memory"
-	"github.com/ulule/limiter/drivers/store/tests"
+	"github.com/ulule/limiter/v3"
+	"github.com/ulule/limiter/v3/drivers/store/memory"
+	"github.com/ulule/limiter/v3/drivers/store/tests"
 )
 
 func TestMemoryStoreSequentialAccess(t *testing.T) {
