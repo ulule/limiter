@@ -5,6 +5,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
 	github.com/gin-gonic/gin v1.3.0
+	github.com/go-chi/chi v3.3.3+incompatible
 	github.com/go-redis/redis v6.14.0+incompatible
 	github.com/json-iterator/go v0.0.0-20180806060727-1624edc4454b // indirect
 	github.com/mattn/go-isatty v0.0.3 // indirect
