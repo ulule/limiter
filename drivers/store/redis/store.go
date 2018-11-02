@@ -38,6 +38,7 @@ func NewStore(client Client) (limiter.Store, error) {
 	return NewStoreWithOptions(client, limiter.StoreOptions{
 		Prefix:          limiter.DefaultPrefix,
 		CleanUpInterval: limiter.DefaultCleanUpInterval,
+		MaxRetry:        limiter.DefaultMaxRetry,
 	})
 }
 
