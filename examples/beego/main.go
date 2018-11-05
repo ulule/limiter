@@ -10,6 +10,7 @@ import (
 	"github.com/astaxie/beego/logs"
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -48,15 +49,16 @@ func main() {
 func rateLimit(r *rateLimiter, ctx *context.Context) {
 	var (
 		limiterCtx limiter.Context
+		ip         net.IP
 		err        error
 		req        = ctx.Request
 	)
 
-	ip := limiter.GetIP(req, false)
-
 	if strings.HasPrefix(ctx.Input.URL(), "/login") {
+		ip = r.loginLimiter.GetIP(req)
 		limiterCtx, err = r.loginLimiter.Get(req.Context(), ip.String())
 	} else {
+		ip = r.generalLimiter.GetIP(req)
 		limiterCtx, err = r.generalLimiter.Get(req.Context(), ip.String())
 	}
 	if err != nil {
