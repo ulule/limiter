@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	redis "github.com/go-redis/redis"
-	"github.com/ulule/limiter"
-	"github.com/ulule/limiter/drivers/middleware/stdlib"
-	sredis "github.com/ulule/limiter/drivers/store/redis"
+	"github.com/ulule/limiter/v3"
+	"github.com/ulule/limiter/v3/drivers/middleware/stdlib"
+	sredis "github.com/ulule/limiter/v3/drivers/store/redis"
 )
 
 func main() {
@@ -39,7 +39,7 @@ func main() {
 	}
 
 	// Create a new middleware with the limiter instance.
-	middleware := stdlib.NewMiddleware(limiter.New(store, rate), stdlib.WithForwardHeader(true))
+	middleware := stdlib.NewMiddleware(limiter.New(store, rate, limiter.WithTrustForwardHeader(true)))
 
 	// Launch a simple server.
 	http.Handle("/", middleware.Handler(http.HandlerFunc(index)))
