@@ -1,4 +1,4 @@
-FROM golang:1.11.1-stretch
+FROM golang:1.11.2-stretch
 
 MAINTAINER thomas.leroux@ulule.com
 
