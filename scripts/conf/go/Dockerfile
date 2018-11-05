@@ -9,21 +9,16 @@ ENV LC_ALL C.UTF-8
 RUN apt-get -y update \
     && apt-get upgrade -y \
     && apt-get -y install git \
-    && mkdir -p /go/src/github.com/golang \
-    && cd /go/src/github.com/golang \
-    && git clone https://github.com/golang/dep.git \
-    && cd dep \
-    && git checkout tags/v0.4.1 \
-    && go get github.com/golang/dep/cmd/dep \
-    && go get -u -v github.com/stretchr/testify/require \
-    && go get -u -v github.com/davecgh/go-spew/spew \
-    && go get -u -v github.com/alecthomas/gometalinter \
-    && gometalinter --install \
+    && mkdir -p /media/ulule/limiter \
+    && go get -u -v -d github.com/stretchr/testify/require \
+    && go get -u -v -d github.com/davecgh/go-spew/spew \
+    && go get -u -d -v github.com/golangci/golangci-lint/cmd/golangci-lint \
+    && go install github.com/golangci/golangci-lint/cmd/golangci-lint \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-COPY . /go/src/github.com/ulule/limiter
-WORKDIR /go/src/github.com/ulule/limiter
-RUN dep ensure
+COPY . /media/ulule/limiter
+WORKDIR /media/ulule/limiter
+RUN go mod download
 
 CMD /bin/bash
