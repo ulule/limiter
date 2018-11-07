@@ -230,11 +230,11 @@ func updateValue(rtx *libredis.Tx, key string, expiration time.Duration) (int64,
 		return 0, 0, err
 	}
 
-	// If ttl is -1, we have to define key expiration.
+	// If ttl is -1ms, we have to define key expiration.
 	// PTTL return values changed as of Redis 2.8
-	// Now the command returns -2 if the key does not exist, and -1 if the key exists, but there is no expiry set
+	// Now the command returns -2ms if the key does not exist, and -1ms if the key exists, but there is no expiry set
 	// We shouldn't try to set an expiry on a key that doesn't exist
-	if ttl == -1 {
+	if ttl == (-1 * time.Millisecond) {
 		expire := rtx.Expire(key, expiration)
 
 		ok, err := expire.Result()
