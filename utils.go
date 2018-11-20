@@ -5,7 +5,6 @@ import (
 	"net"
 	"net/http"
 	"strings"
-	"time"
 )
 
 // GetIP returns IP address from request.
@@ -40,6 +39,6 @@ func GetIPKey(r *http.Request, trustForwardHeader ...bool) string {
 
 // Random return a random integer between min and max.
 func Random(min, max int) int {
-	rand.Seed(time.Now().Unix())
+	rand.Seed(Now().Unix())
 	return rand.Intn(max-min) + min
 }

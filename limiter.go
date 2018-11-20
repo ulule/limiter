@@ -2,7 +2,11 @@ package limiter
 
 import (
 	"context"
+	"time"
 )
+
+// Now so that can be controlled in testing
+var Now = time.Now
 
 // -----------------------------------------------------------------
 // Context

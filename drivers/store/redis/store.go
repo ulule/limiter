@@ -65,7 +65,7 @@ func NewStoreWithOptions(client Client, options limiter.StoreOptions) (limiter.S
 // Get returns the limit for given identifier.
 func (store *Store) Get(ctx context.Context, key string, rate limiter.Rate) (limiter.Context, error) {
 	key = fmt.Sprintf("%s:%s", store.Prefix, key)
-	now := time.Now()
+	now := limiter.Now()
 
 	lctx := limiter.Context{}
 	onWatch := func(rtx *libredis.Tx) error {
@@ -107,7 +107,7 @@ func (store *Store) Get(ctx context.Context, key string, rate limiter.Rate) (lim
 // Peek returns the limit for given identifier, without modification on current values.
 func (store *Store) Peek(ctx context.Context, key string, rate limiter.Rate) (limiter.Context, error) {
 	key = fmt.Sprintf("%s:%s", store.Prefix, key)
-	now := time.Now()
+	now := limiter.Now()
 
 	lctx := limiter.Context{}
 	onWatch := func(rtx *libredis.Tx) error {

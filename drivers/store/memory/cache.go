@@ -4,6 +4,8 @@ import (
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/ulule/limiter"
 )
 
 // Forked from https://github.com/patrickmn/go-cache
@@ -61,7 +63,7 @@ func (counter Counter) Expired() bool {
 	if counter.Expiration == 0 {
 		return false
 	}
-	return time.Now().UnixNano() > counter.Expiration
+	return limiter.Now().UnixNano() > counter.Expiration
 }
 
 // Cache contains a collection of counters.
@@ -95,7 +97,7 @@ func (cache *Cache) Increment(key string, value int64, duration time.Duration) (
 
 	counter, ok := cache.counters[key]
 	if !ok || counter.Expired() {
-		expiration := time.Now().Add(duration).UnixNano()
+		expiration := limiter.Now().Add(duration).UnixNano()
 		counter = Counter{
 			Value:      value,
 			Expiration: expiration,
@@ -123,7 +125,7 @@ func (cache *Cache) Get(key string, duration time.Duration) (int64, time.Time) {
 
 	counter, ok := cache.counters[key]
 	if !ok || counter.Expired() {
-		expiration := time.Now().Add(duration).UnixNano()
+		expiration := limiter.Now().Add(duration).UnixNano()
 		cache.mutex.RUnlock()
 		return 0, time.Unix(0, expiration)
 	}
@@ -137,7 +139,7 @@ func (cache *Cache) Get(key string, duration time.Duration) (int64, time.Time) {
 
 // Clean will deleted any expired keys.
 func (cache *Cache) Clean() {
-	now := time.Now().UnixNano()
+	now := limiter.Now().UnixNano()
 
 	cache.mutex.Lock()
 	for key, counter := range cache.counters {
