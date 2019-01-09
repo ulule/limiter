@@ -1,17 +1,19 @@
 package main
+
 /*
-More comprehensive example: 
+More comprehensive example:
 https://gist.github.com/gadelkareem/5a087bfda1f673241d0ac65759156cfd
 */
 import (
 	"github.com/astaxie/beego"
-	"github.com/ulule/limiter"
-	"github.com/ulule/limiter/drivers/store/memory"
 	"github.com/astaxie/beego/context"
+	"github.com/astaxie/beego/logs"
+	"github.com/ulule/limiter/v3"
+	"github.com/ulule/limiter/v3/drivers/store/memory"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
-	"github.com/astaxie/beego/logs"
 )
 
 type rateLimiter struct {
@@ -47,15 +49,16 @@ func main() {
 func rateLimit(r *rateLimiter, ctx *context.Context) {
 	var (
 		limiterCtx limiter.Context
+		ip         net.IP
 		err        error
 		req        = ctx.Request
 	)
 
-	ip := limiter.GetIP(req, false)
-
 	if strings.HasPrefix(ctx.Input.URL(), "/login") {
+		ip = r.loginLimiter.GetIP(req)
 		limiterCtx, err = r.loginLimiter.Get(req.Context(), ip.String())
 	} else {
+		ip = r.generalLimiter.GetIP(req)
 		limiterCtx, err = r.generalLimiter.Get(req.Context(), ip.String())
 	}
 	if err != nil {

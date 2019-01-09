@@ -21,10 +21,12 @@ jobs:
           name: Run tests
           command: scripts/go-wrapper scripts/test
           environment:
+            GO111MODULE: on
             REDIS_DISABLE_BOOTSTRAP: false
             REDIS_URI: redis://localhost:26379/1
 
       - run:
           name: Run linters
           command: scripts/go-wrapper scripts/lint
-          no_output_timeout: 10m
+          environment:
+            GO111MODULE: on

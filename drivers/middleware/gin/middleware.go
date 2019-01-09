@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/ulule/limiter"
+	"github.com/ulule/limiter/v3"
 )
 
 // Middleware is the middleware for basic http.Handler.

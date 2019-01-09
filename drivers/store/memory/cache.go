@@ -78,7 +78,7 @@ func NewCache(cleanInterval time.Duration) *CacheWrapper {
 		counters: map[string]Counter{},
 	}
 
-	wrapper := &CacheWrapper{cache}
+	wrapper := &CacheWrapper{Cache: cache}
 
 	if cleanInterval > 0 {
 		startCleaner(cache, cleanInterval)

@@ -44,10 +44,3 @@ func WithLimitReachedHandler(handler LimitReachedHandler) Option {
 func DefaultLimitReachedHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Limit exceeded", http.StatusTooManyRequests)
 }
-
-// WithForwardHeader will configure the Middleware to trust X-Real-IP and X-Forwarded-For headers.
-func WithForwardHeader(trusted bool) Option {
-	return option(func(middleware *Middleware) {
-		middleware.TrustForwardHeader = trusted
-	})
-}

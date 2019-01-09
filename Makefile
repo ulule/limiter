@@ -1,9 +1,6 @@
-.PHONY: test
+.PHONY: test lint
 
-cleandb:
-	@(redis-cli KEYS "limitertests:*" | xargs redis-cli DEL)
-
-test: cleandb
+test:
 	@(scripts/test)
 
 lint:
