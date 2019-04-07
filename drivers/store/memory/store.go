@@ -54,3 +54,14 @@ func (store *Store) Peek(ctx context.Context, key string, rate limiter.Rate) (li
 	lctx := common.GetContextFromState(now, rate, expiration, count)
 	return lctx, nil
 }
+
+// Reset returns the limit for given identifier.
+func (store *Store) Reset(ctx context.Context, key string) (limiter.Context, error) {
+	key = fmt.Sprintf("%s:%s", store.Prefix, key)
+	now := time.Now()
+
+	count, expiration := store.cache.Reset(key, rate.Period)
+
+	lctx := common.GetContextFromState(now, rate, expiration, count)
+	return lctx, nil
+}
