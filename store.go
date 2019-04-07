@@ -11,6 +11,8 @@ type Store interface {
 	Get(ctx context.Context, key string, rate Rate) (Context, error)
 	// Peek returns the limit for given identifier, without modification on current values.
 	Peek(ctx context.Context, key string, rate Rate) (Context, error)
+	// Reset resets the limit to zero for given identifier.
+	Reset(ctx context.Context, key string4) (Context, error)
 }
 
 // StoreOptions are options for store.
