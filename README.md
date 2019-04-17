@@ -35,7 +35,7 @@ In five steps:
 ```go
 // Create a rate with the given limit (number of requests) for the given
 // period (a time.Duration of your choice).
-import "github.com/ulule/limiter/v3"
+import "github.com/ulule/limiter"
 
 rate := limiter.Rate{
     Period: 1 * time.Hour,
@@ -64,7 +64,7 @@ if err != nil {
 // compliant to limiter.Store interface will do the job. The defaults are
 // "limiter" as Redis key prefix and a maximum of 3 retries for the key under
 // race condition.
-import "github.com/ulule/limiter/v3/drivers/store/redis"
+import "github.com/ulule/limiter/drivers/store/redis"
 
 store, err := redis.NewStore(client)
 if err != nil {
@@ -73,7 +73,7 @@ if err != nil {
 
 // Alternatively, you can pass options to the store with the "WithOptions"
 // function. For example, for Redis store:
-import "github.com/ulule/limiter/v3/drivers/store/redis"
+import "github.com/ulule/limiter/drivers/store/redis"
 
 store, err := redis.NewStoreWithOptions(pool, limiter.StoreOptions{
     Prefix:   "your_own_prefix",
@@ -84,7 +84,7 @@ if err != nil {
 }
 
 // Or use a in-memory store with a goroutine which clears expired keys.
-import "github.com/ulule/limiter/v3/drivers/store/memory"
+import "github.com/ulule/limiter/drivers/store/memory"
 
 store := memory.NewStore()
 

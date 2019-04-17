@@ -3,7 +3,7 @@ package common
 import (
 	"time"
 
-	"github.com/ulule/limiter/v3"
+	"github.com/ulule/limiter"
 )
 
 // GetContextFromState generate a new limiter.Context from given state.
