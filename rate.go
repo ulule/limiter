@@ -25,9 +25,10 @@ func NewRateFromFormatted(formatted string) (Rate, error) {
 	}
 
 	periods := map[string]time.Duration{
-		"S": time.Second, // Second
-		"M": time.Minute, // Minute
-		"H": time.Hour,   // Hour
+		"S": time.Second,    // Second
+		"M": time.Minute,    // Minute
+		"H": time.Hour,      // Hour
+		"D": time.Hour * 24, // Day
 	}
 
 	limit, period := values[0], strings.ToUpper(values[1])
