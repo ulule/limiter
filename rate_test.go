@@ -30,6 +30,11 @@ func TestRate(t *testing.T) {
 			Period:    1 * time.Hour,
 			Limit:     int64(3),
 		},
+		"2000-D": {
+			Formatted: "2000-D",
+			Period:    24 * time.Hour,
+			Limit:     int64(2000),
+		},
 	}
 
 	for k, v := range expected {
