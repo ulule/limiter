@@ -101,6 +101,7 @@ See middleware examples:
 * [Gin](https://github.com/ulule/limiter/tree/master/examples/gin/main.go)
 * [Beego](https://github.com/ulule/limiter/blob/master/examples/beego/main.go)
 * [Chi](https://github.com/ulule/limiter/tree/master/examples/chi/main.go)
+* [Echo](https://github.com/ulule/limiter/tree/master/examples/echo/main.go)
 
 
 ## How it works
