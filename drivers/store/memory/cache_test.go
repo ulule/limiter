@@ -108,13 +108,24 @@ func TestCacheReset(t *testing.T) {
 	is.Equal(int64(0), x)
 	is.InEpsilon(deleted, expire.UnixNano(), epsilon)
 
-	x, expire = cache.Get(key, duration)
+	x, expire = cache.Increment(key, 1, duration)
 	is.Equal(int64(1), x)
+	is.InEpsilon(deleted, expire.UnixNano(), epsilon)
+
+	x, expire = cache.Increment(key, 1, duration)
+	is.Equal(int64(2), x)
+	is.InEpsilon(deleted, expire.UnixNano(), epsilon)
 
 	x, expire = cache.Reset(key, duration)
 	is.Equal(int64(0), x)
+	is.InEpsilon(deleted, expire.UnixNano(), epsilon)
 
-	x, expire = cache.Get(key, duration)
+	x, expire = cache.Increment(key, 1, duration)
 	is.Equal(int64(1), x)
+	is.InEpsilon(deleted, expire.UnixNano(), epsilon)
+
+	x, expire = cache.Increment(key, 1, duration)
+	is.Equal(int64(2), x)
+	is.InEpsilon(deleted, expire.UnixNano(), epsilon)
 
 }
