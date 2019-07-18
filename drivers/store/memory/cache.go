@@ -151,13 +151,9 @@ func (cache *Cache) Clean() {
 // Reset changes the key's value and resets the expiration.
 func (cache *Cache) Reset(key string, duration time.Duration) (int64, time.Time) {
 	cache.mutex.Lock()
-	expiration := time.Now().Add(duration).UnixNano()
-	counter := Counter{
-		Value:      0,
-		Expiration: expiration,
-	}
-	cache.counters[key] = counter
+	delete(cache.counters, key)
 	cache.mutex.Unlock()
 
-	return value, time.Unix(0, expiration)
+	expiration := time.Now().Add(duration).UnixNano()
+	return 0, time.Unix(0, expiration)
 }

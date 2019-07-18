@@ -56,7 +56,7 @@ func (store *Store) Peek(ctx context.Context, key string, rate limiter.Rate) (li
 }
 
 // Reset returns the limit for given identifier.
-func (store *Store) Reset(ctx context.Context, key string) (limiter.Context, error) {
+func (store *Store) Reset(ctx context.Context, key string, rate limiter.Rate) (limiter.Context, error) {
 	key = fmt.Sprintf("%s:%s", store.Prefix, key)
 	now := time.Now()
 
