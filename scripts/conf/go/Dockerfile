@@ -1,6 +1,6 @@
-FROM golang:1.11.2-stretch
+FROM golang:1.12.7-stretch
 
-MAINTAINER thomas.leroux@ulule.com
+MAINTAINER thomas@leroux.io
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
@@ -21,4 +21,4 @@ COPY . /media/ulule/limiter
 WORKDIR /media/ulule/limiter
 RUN go mod download
 
-CMD /bin/bash
+CMD [ "/bin/bash" ]

@@ -1,5 +1,7 @@
 module github.com/ulule/limiter/v3
 
+go 1.12
+
 require (
 	github.com/astaxie/beego v1.10.0
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
