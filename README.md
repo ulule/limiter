@@ -20,6 +20,10 @@ Using [Go Modules](https://github.com/golang/go/wiki/Modules)
 $ go get github.com/ulule/limiter/v3@v3.2.0
 ```
 
+**Dep backport:**
+
+Please use [v3-dep](https://github.com/ulule/limiter/tree/v3-dep) branch.
+
 ## Usage
 
 In five steps:
