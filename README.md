@@ -14,11 +14,13 @@
 
 ## Installation
 
-Using [Go Modules](https://github.com/golang/go/wiki/Modules)
+Using [Dep](https://github.com/golang/dep)
 
 ```bash
-$ go get github.com/ulule/limiter/v3@v3.1.0
+$ dep ensure -add github.com/ulule/limiter@v3-dep
 ```
+
+> **Issue:** https://github.com/ulule/limiter/issues/57
 
 ## Usage
 
