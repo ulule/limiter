@@ -21,4 +21,4 @@ COPY . /media/ulule/limiter
 WORKDIR /media/ulule/limiter
 RUN go mod download
 
-CMD /bin/bash
+CMD [ "/bin/bash" ]
