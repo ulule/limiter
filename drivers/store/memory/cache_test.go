@@ -94,3 +94,27 @@ func TestCacheGet(t *testing.T) {
 	is.InEpsilon(deleted, expire.UnixNano(), epsilon)
 
 }
+
+func TestCacheReset(t *testing.T) {
+	is := require.New(t)
+
+	key := "foobar"
+	cache := memory.NewCache(10 * time.Nanosecond)
+	duration := 50 * time.Millisecond
+	deleted := time.Now().Add(duration).UnixNano()
+	epsilon := 0.001
+
+	x, expire := cache.Get(key, duration)
+	is.Equal(int64(0), x)
+	is.InEpsilon(deleted, expire.UnixNano(), epsilon)
+
+	x, expire = cache.Get(key, duration)
+	is.Equal(int64(1), x)
+
+	x, expire = cache.Reset(key, duration)
+	is.Equal(int64(0), x)
+
+	x, expire = cache.Get(key, duration)
+	is.Equal(int64(1), x)
+
+}
