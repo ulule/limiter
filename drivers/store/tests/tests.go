@@ -2,7 +2,6 @@ package tests
 
 import (
 	"context"
-	"math"
 	"sync"
 	"testing"
 	"time"
@@ -22,39 +21,72 @@ func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 		Period: time.Minute,
 	})
 
-	for i := 1; i <= 6; i++ {
+	// Check counter increment.
+	{
+		for i := 1; i <= 6; i++ {
 
-		if i <= 3 {
+			if i <= 3 {
 
-			lctx, err := limiter.Peek(ctx, "foo")
+				lctx, err := limiter.Peek(ctx, "foo")
+				is.NoError(err)
+				is.NotZero(lctx)
+				is.Equal(int64(3-(i-1)), lctx.Remaining)
+				is.False(lctx.Reached)
+
+			}
+
+			lctx, err := limiter.Get(ctx, "foo")
 			is.NoError(err)
 			is.NotZero(lctx)
-			is.Equal(int64(3-(i-1)), lctx.Remaining)
 
+			if i <= 3 {
+
+				is.Equal(int64(3), lctx.Limit)
+				is.Equal(int64(3-i), lctx.Remaining)
+				is.True((lctx.Reset - time.Now().Unix()) <= 60)
+				is.False(lctx.Reached)
+
+				lctx, err = limiter.Peek(ctx, "foo")
+				is.NoError(err)
+				is.Equal(int64(3-i), lctx.Remaining)
+				is.False(lctx.Reached)
+
+			} else {
+
+				is.Equal(int64(3), lctx.Limit)
+				is.Equal(int64(0), lctx.Remaining)
+				is.True((lctx.Reset - time.Now().Unix()) <= 60)
+				is.True(lctx.Reached)
+
+			}
 		}
+	}
 
-		lctx, err := limiter.Get(ctx, "foo")
+	// Check counter reset.
+	{
+		lctx, err := limiter.Peek(ctx, "foo")
 		is.NoError(err)
 		is.NotZero(lctx)
 
-		if i <= 3 {
+		is.Equal(int64(3), lctx.Limit)
+		is.Equal(int64(0), lctx.Remaining)
+		is.True((lctx.Reset - time.Now().Unix()) <= 60)
+		is.True(lctx.Reached)
 
-			is.Equal(int64(3), lctx.Limit)
-			is.Equal(int64(3-i), lctx.Remaining)
-			is.True(math.Ceil(time.Since(time.Unix(lctx.Reset, 0)).Seconds()) <= 60)
+		lctx, err = limiter.Reset(ctx, "foo")
+		is.NoError(err)
+		is.NotZero(lctx)
 
-			lctx, err = limiter.Peek(ctx, "foo")
-			is.NoError(err)
-			is.Equal(int64(3-i), lctx.Remaining)
+		lctx, err = limiter.Peek(ctx, "foo")
+		is.NoError(err)
+		is.NotZero(lctx)
 
-		} else {
-
-			is.Equal(int64(3), lctx.Limit)
-			is.True(lctx.Remaining == 0)
-			is.True(math.Ceil(time.Since(time.Unix(lctx.Reset, 0)).Seconds()) <= 60)
-
-		}
+		is.Equal(int64(3), lctx.Limit)
+		is.Equal(int64(3), lctx.Remaining)
+		is.True((lctx.Reset - time.Now().Unix()) <= 60)
+		is.False(lctx.Reached)
 	}
+
 }
 
 // TestStoreConcurrentAccess verify that store works as expected with a concurrent access.
