@@ -142,26 +142,13 @@ func (store *Store) Reset(ctx context.Context, key string, rate limiter.Rate) (l
 	lctx := limiter.Context{}
 	onWatch := func(rtx *libredis.Tx) error {
 
-		created, err := store.doSetValue(rtx, key, rate.Period)
+		err := store.doResetValue(rtx, key)
 		if err != nil {
 			return err
 		}
 
-		if created {
-			expiration := now.Add(rate.Period)
-			lctx = common.GetContextFromState(now, rate, expiration, 1)
-			return nil
-		}
-
-		count, ttl, err := store.doResetValue(rtx, key, rate.Period)
-		if err != nil {
-			return err
-		}
-
+		count := int64(0)
 		expiration := now.Add(rate.Period)
-		if ttl > 0 {
-			expiration = now.Add(ttl)
-		}
 
 		lctx = common.GetContextFromState(now, rate, expiration, count)
 		return nil
@@ -169,7 +156,7 @@ func (store *Store) Reset(ctx context.Context, key string, rate limiter.Rate) (l
 
 	err := store.client.Watch(onWatch, key)
 	if err != nil {
-		err = errors.Wrapf(err, "limiter: cannot get value for %s", key)
+		err = errors.Wrapf(err, "limiter: cannot reset value for %s", key)
 		return limiter.Context{}, err
 	}
 
@@ -293,63 +280,30 @@ func updateValue(rtx *libredis.Tx, key string, expiration time.Duration) (int64,
 
 }
 
-// doResetValue will execute setValue with a retry mecanism (optimistic locking) until store.MaxRetry is reached.
-func (store *Store) doResetValue(rtx *libredis.Tx, key string,
-	expiration time.Duration) (int64, time.Duration, error) {
+// doResetValue will execute resetValue with a retry mecanism (optimistic locking) until store.MaxRetry is reached.
+func (store *Store) doResetValue(rtx *libredis.Tx, key string) error {
 	for i := 0; i < store.MaxRetry; i++ {
-		count, ttl, err := resetValue(rtx, key, expiration)
+		err := resetValue(rtx, key)
 		if err == nil {
-			return count, ttl, nil
-		}
-
-		// If ttl is negative and there is an error, do not retry an update.
-		if ttl < 0 {
-			return 0, 0, err
+			return nil
 		}
 	}
-	return 0, 0, errors.New("retry limit exceeded")
+	return errors.New("retry limit exceeded")
 }
 
-// resetValue will try to increment the counter identified by given key.
-func resetValue(rtx *libredis.Tx, key string, expiration time.Duration) (int64, time.Duration, error) {
-	pipe := rtx.Pipeline()
-	value := pipe.Set(key, 0, expiration)
-	// value := pipe.Incr(key)
-	expire := pipe.PTTL(key)
+// resetValue will try to reset the counter identified by given key.
+func resetValue(rtx *libredis.Tx, key string) error {
+	deletion := rtx.Del(key)
 
-	_, err := pipe.Exec()
+	count, err := deletion.Result()
 	if err != nil {
-		return 0, 0, err
+		return err
+	}
+	if count != 1 {
+		return errors.New("cannot delete key")
 	}
 
-	count, err := value.Result()
-	if err != nil {
-		return 0, 0, err
-	}
-
-	ttl, err := expire.Result()
-	if err != nil {
-		return 0, 0, err
-	}
-
-	// If ttl is -1ms, we have to define key expiration.
-	// PTTL return values changed as of Redis 2.8
-	// Now the command returns -2ms if the key does not exist, and -1ms if the key exists, but there is no expiry set
-	// We shouldn't try to set an expiry on a key that doesn't exist
-	if ttl == (-1 * time.Millisecond) {
-		expire := rtx.Expire(key, expiration)
-
-		ok, err := expire.Result()
-		if err != nil {
-			return count, ttl, err
-		}
-
-		if !ok {
-			return count, ttl, errors.New("cannot configure timeout on key")
-		}
-	}
-
-	return count, ttl, nil
+	return nil
 
 }
 
