@@ -134,6 +134,35 @@ func (store *Store) Peek(ctx context.Context, key string, rate limiter.Rate) (li
 	return lctx, nil
 }
 
+// Reset returns the limit for given identifier which is set to zero.
+func (store *Store) Reset(ctx context.Context, key string, rate limiter.Rate) (limiter.Context, error) {
+	key = fmt.Sprintf("%s:%s", store.Prefix, key)
+	now := time.Now()
+
+	lctx := limiter.Context{}
+	onWatch := func(rtx *libredis.Tx) error {
+
+		err := store.doResetValue(rtx, key)
+		if err != nil {
+			return err
+		}
+
+		count := int64(0)
+		expiration := now.Add(rate.Period)
+
+		lctx = common.GetContextFromState(now, rate, expiration, count)
+		return nil
+	}
+
+	err := store.client.Watch(onWatch, key)
+	if err != nil {
+		err = errors.Wrapf(err, "limiter: cannot reset value for %s", key)
+		return limiter.Context{}, err
+	}
+
+	return lctx, nil
+}
+
 // doPeekValue will execute peekValue with a retry mecanism (optimistic locking) until store.MaxRetry is reached.
 func (store *Store) doPeekValue(rtx *libredis.Tx, key string) (int64, time.Duration, error) {
 	for i := 0; i < store.MaxRetry; i++ {
@@ -248,6 +277,33 @@ func updateValue(rtx *libredis.Tx, key string, expiration time.Duration) (int64,
 	}
 
 	return count, ttl, nil
+
+}
+
+// doResetValue will execute resetValue with a retry mecanism (optimistic locking) until store.MaxRetry is reached.
+func (store *Store) doResetValue(rtx *libredis.Tx, key string) error {
+	for i := 0; i < store.MaxRetry; i++ {
+		err := resetValue(rtx, key)
+		if err == nil {
+			return nil
+		}
+	}
+	return errors.New("retry limit exceeded")
+}
+
+// resetValue will try to reset the counter identified by given key.
+func resetValue(rtx *libredis.Tx, key string) error {
+	deletion := rtx.Del(key)
+
+	count, err := deletion.Result()
+	if err != nil {
+		return err
+	}
+	if count != 1 {
+		return errors.New("cannot delete key")
+	}
+
+	return nil
 
 }
 

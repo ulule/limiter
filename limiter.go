@@ -53,3 +53,8 @@ func (limiter *Limiter) Get(ctx context.Context, key string) (Context, error) {
 func (limiter *Limiter) Peek(ctx context.Context, key string) (Context, error) {
 	return limiter.Store.Peek(ctx, key, limiter.Rate)
 }
+
+// Reset sets the limit for given identifier to zero.
+func (limiter *Limiter) Reset(ctx context.Context, key string) (Context, error) {
+	return limiter.Store.Reset(ctx, key, limiter.Rate)
+}
