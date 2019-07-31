@@ -17,7 +17,7 @@
 Using [Go Modules](https://github.com/golang/go/wiki/Modules)
 
 ```bash
-$ go get github.com/ulule/limiter/v3@v3.3.0
+$ go get github.com/ulule/limiter/v3@v3.3.1
 ```
 
 **Dep backport:**
@@ -101,12 +101,11 @@ instance := limiter.New(store, rate)
 
 See middleware examples:
 
-* [HTTP](https://github.com/ulule/limiter/tree/master/examples/http/main.go)
-* [Gin](https://github.com/ulule/limiter/tree/master/examples/gin/main.go)
-* [Beego](https://github.com/ulule/limiter/blob/master/examples/beego/main.go)
-* [Chi](https://github.com/ulule/limiter/tree/master/examples/chi/main.go)
-* [Echo](https://github.com/ulule/limiter/tree/master/examples/echo/main.go)
-
+* [HTTP](https://github.com/ulule/limiter-examples/tree/master//http/main.go)
+* [Gin](https://github.com/ulule/limiter-examples/tree/master//gin/main.go)
+* [Beego](https://github.com/ulule/limiter-examples/blob/master//beego/main.go)
+* [Chi](https://github.com/ulule/limiter-examples/tree/master//chi/main.go)
+* [Echo](https://github.com/ulule/limiter-examples/tree/master//echo/main.go)
 
 ## How it works
 
