@@ -2,6 +2,12 @@
 
 set -eo pipefail
 
+if [[ ! -x "$(command -v go)" ]]; then
+  echo >&2 "go runtime is required: https://golang.org/doc/install"
+  echo >&2 "You can use scripts/go-wrapper $0 to use go in a docker container."
+  exit 1
+fi
+
 golinter_path="${GOPATH}/bin/golangci-lint"
 
 if [[ ! -x "${golinter_path}" ]]; then
