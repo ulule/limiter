@@ -5,7 +5,7 @@ set -eo pipefail
 DOCKER_REDIS_PORT=${DOCKER_REDIS_PORT:-26379}
 
 CONTAINER_NAME="limiter-redis"
-CONTAINER_IMAGE="redis:4.0"
+CONTAINER_IMAGE="redis:5.0"
 
 do_start() {
 
