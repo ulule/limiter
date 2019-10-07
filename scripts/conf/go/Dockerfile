@@ -13,7 +13,7 @@ RUN apt-get -y update \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -ms /bin/bash gopher
 
-COPY . /media/ulule/limiter
+COPY go.mod go.sum /media/ulule/limiter/
 RUN chown -R gopher:gopher /media/ulule/limiter
 ENV GOPATH /home/gopher/go
 ENV PATH $GOPATH/bin:$PATH
@@ -23,5 +23,6 @@ RUN go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
 
 WORKDIR /media/ulule/limiter
 RUN go mod download
+COPY --chown=gopher:gopher . /media/ulule/limiter
 
 CMD [ "/bin/bash" ]
