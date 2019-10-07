@@ -277,7 +277,6 @@ func updateValue(rtx *libredis.Tx, key string, expiration time.Duration) (int64,
 	}
 
 	return count, ttl, nil
-
 }
 
 // doResetValue will execute resetValue with a retry mecanism (optimistic locking) until store.MaxRetry is reached.
@@ -295,16 +294,12 @@ func (store *Store) doResetValue(rtx *libredis.Tx, key string) error {
 func resetValue(rtx *libredis.Tx, key string) error {
 	deletion := rtx.Del(key)
 
-	count, err := deletion.Result()
+	_, err := deletion.Result()
 	if err != nil {
 		return err
 	}
-	if count != 1 {
-		return errors.New("cannot delete key")
-	}
 
 	return nil
-
 }
 
 // ping checks if redis is alive.

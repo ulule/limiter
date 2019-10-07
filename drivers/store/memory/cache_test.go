@@ -92,7 +92,6 @@ func TestCacheGet(t *testing.T) {
 	x, expire := cache.Get(key, duration)
 	is.Equal(int64(0), x)
 	is.InEpsilon(deleted, expire.UnixNano(), epsilon)
-
 }
 
 func TestCacheReset(t *testing.T) {
@@ -127,5 +126,4 @@ func TestCacheReset(t *testing.T) {
 	x, expire = cache.Increment(key, 1, duration)
 	is.Equal(int64(2), x)
 	is.InEpsilon(deleted, expire.UnixNano(), epsilon)
-
 }
