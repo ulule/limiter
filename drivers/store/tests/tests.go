@@ -77,6 +77,11 @@ func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 		is.NoError(err)
 		is.NotZero(lctx)
 
+		is.Equal(int64(3), lctx.Limit)
+		is.Equal(int64(3), lctx.Remaining)
+		is.True((lctx.Reset - time.Now().Unix()) <= 60)
+		is.False(lctx.Reached)
+
 		lctx, err = limiter.Peek(ctx, "foo")
 		is.NoError(err)
 		is.NotZero(lctx)
@@ -85,8 +90,29 @@ func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 		is.Equal(int64(3), lctx.Remaining)
 		is.True((lctx.Reset - time.Now().Unix()) <= 60)
 		is.False(lctx.Reached)
-	}
 
+		lctx, err = limiter.Get(ctx, "foo")
+		is.NoError(err)
+		is.NotZero(lctx)
+
+		lctx, err = limiter.Reset(ctx, "foo")
+		is.NoError(err)
+		is.NotZero(lctx)
+
+		is.Equal(int64(3), lctx.Limit)
+		is.Equal(int64(3), lctx.Remaining)
+		is.True((lctx.Reset - time.Now().Unix()) <= 60)
+		is.False(lctx.Reached)
+
+		lctx, err = limiter.Reset(ctx, "foo")
+		is.NoError(err)
+		is.NotZero(lctx)
+
+		is.Equal(int64(3), lctx.Limit)
+		is.Equal(int64(3), lctx.Remaining)
+		is.True((lctx.Reset - time.Now().Unix()) <= 60)
+		is.False(lctx.Reached)
+	}
 }
 
 // TestStoreConcurrentAccess verify that store works as expected with a concurrent access.
