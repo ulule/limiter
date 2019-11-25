@@ -17,7 +17,7 @@
 Using [Go Modules](https://github.com/golang/go/wiki/Modules)
 
 ```bash
-$ go get github.com/ulule/limiter/v3@v3.3.2
+$ go get github.com/ulule/limiter/v3@v3.3.3
 ```
 
 **Dep backport:**
