@@ -17,9 +17,6 @@ import (
 
 func TestFasthttpMiddleware(t *testing.T) {
 	is := require.New(t)
-	req := fasthttp.AcquireRequest()
-	req.Header.SetHost("localhost:8080")
-	req.Header.SetRequestURI("/")
 
 	store := memory.NewStore()
 	is.NotZero(store)
@@ -46,6 +43,9 @@ func TestFasthttpMiddleware(t *testing.T) {
 
 	for i := int64(1); i <= clients; i++ {
 		resp := fasthttp.AcquireResponse()
+		req := fasthttp.AcquireRequest()
+		req.Header.SetHost("localhost:8081")
+		req.Header.SetRequestURI("/")
 		err := serve(router.ServeFastHTTP, req, resp)
 		is.Nil(err)
 
@@ -80,6 +80,9 @@ func TestFasthttpMiddleware(t *testing.T) {
 
 		go func() {
 			resp := fasthttp.AcquireResponse()
+			req := fasthttp.AcquireRequest()
+			req.Header.SetHost("localhost:8081")
+			req.Header.SetRequestURI("/")
 			err := serve(router.ServeFastHTTP, req, resp)
 			is.Nil(err)
 
@@ -119,6 +122,9 @@ func TestFasthttpMiddleware(t *testing.T) {
 
 	for i := int64(1); i <= clients; i++ {
 		resp := fasthttp.AcquireResponse()
+		req := fasthttp.AcquireRequest()
+		req.Header.SetHost("localhost:8081")
+		req.Header.SetRequestURI("/")
 		err := serve(router.ServeFastHTTP, req, resp)
 		is.Nil(err)
 		is.Equal(fasthttp.StatusOK, resp.StatusCode(), strconv.Itoa(int(i)))
