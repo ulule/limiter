@@ -1,9 +1,8 @@
-package phi
+package fasthttp
 
 import (
-	"github.com/fate-lovely/phi"
 	"github.com/ulule/limiter/v3"
-	"github.com/valyala/fasthttp"
+	libFastHttp "github.com/valyala/fasthttp"
 	"strconv"
 )
 
@@ -16,7 +15,7 @@ type Middleware struct {
 }
 
 // NewMiddleware return a new instance of a fasthttp middleware.
-func NewMiddleware(limiter *limiter.Limiter, options ...Option) phi.Middleware {
+func NewMiddleware(limiter *limiter.Limiter, options ...Option) *Middleware {
 	middleware := &Middleware{
 		Limiter:        limiter,
 		OnError:        DefaultErrorHandler,
@@ -28,14 +27,12 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) phi.Middleware {
 		option.apply(middleware)
 	}
 
-	return func(handlerFunc phi.HandlerFunc) phi.HandlerFunc {
-		return middleware.Handle(handlerFunc)
-	}
+	return middleware
 }
 
 // Handle gin request.
-func (middleware *Middleware) Handle(next phi.HandlerFunc) phi.HandlerFunc {
-	return func(ctx *fasthttp.RequestCtx) {
+func (middleware *Middleware) Handle(next libFastHttp.RequestHandler) libFastHttp.RequestHandler {
+	return func(ctx *libFastHttp.RequestCtx) {
 		key := middleware.KeyGetter(ctx)
 		context, err := middleware.Limiter.Get(ctx, key)
 		if err != nil {

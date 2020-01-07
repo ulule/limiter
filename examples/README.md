@@ -9,3 +9,4 @@ Nonetheless, this is list of middleware examples with the new location:
 * [Beego](https://github.com/ulule/limiter-examples/blob/master/beego/main.go)
 * [Chi](https://github.com/ulule/limiter-examples/tree/master/chi/main.go)
 * [Echo](https://github.com/ulule/limiter-examples/tree/master/echo/main.go)
+* [fasthttp](https://github.com/ulule/limiter-examples/tree/master/fasthttp/main.go)
