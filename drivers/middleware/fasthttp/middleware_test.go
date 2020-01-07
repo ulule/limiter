@@ -1,7 +1,6 @@
 package fasthttp_test
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/require"
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/middleware/fasthttp"
@@ -32,7 +31,7 @@ func TestFasthttpMiddleware(t *testing.T) {
 		case "/":
 			ctx.SetStatusCode(libFastHttp.StatusOK)
 			ctx.SetBodyString("hello")
-		break
+			break
 		}
 	}
 
