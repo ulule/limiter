@@ -1,4 +1,4 @@
-package phi
+package fasthttp
 
 import (
 	"github.com/valyala/fasthttp"
