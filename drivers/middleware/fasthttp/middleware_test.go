@@ -5,7 +5,7 @@ import (
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/middleware/fasthttp"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
-	libFastHttp "github.com/valyala/fasthttp"
+	libfasthttp "github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttputil"
 	"net"
 	"strconv"
@@ -26,10 +26,10 @@ func TestFasthttpMiddleware(t *testing.T) {
 
 	middleware := fasthttp.NewMiddleware(limiter.New(store, rate))
 
-	requestHandler := func(ctx *libFastHttp.RequestCtx) {
+	requestHandler := func(ctx *libfasthttp.RequestCtx) {
 		switch string(ctx.Path()) {
 		case "/":
-			ctx.SetStatusCode(libFastHttp.StatusOK)
+			ctx.SetStatusCode(libfasthttp.StatusOK)
 			ctx.SetBodyString("hello")
 			break
 		}
@@ -43,17 +43,17 @@ func TestFasthttpMiddleware(t *testing.T) {
 	//
 
 	for i := int64(1); i <= clients; i++ {
-		resp := libFastHttp.AcquireResponse()
-		req := libFastHttp.AcquireRequest()
+		resp := libfasthttp.AcquireResponse()
+		req := libfasthttp.AcquireRequest()
 		req.Header.SetHost("localhost:8081")
 		req.Header.SetRequestURI("/")
 		err := serve(middleware.Handle(requestHandler), req, resp)
 		is.Nil(err)
 
 		if i <= success {
-			is.Equal(resp.StatusCode(), libFastHttp.StatusOK)
+			is.Equal(resp.StatusCode(), libfasthttp.StatusOK)
 		} else {
-			is.Equal(resp.StatusCode(), libFastHttp.StatusTooManyRequests)
+			is.Equal(resp.StatusCode(), libfasthttp.StatusTooManyRequests)
 		}
 	}
 
@@ -66,10 +66,10 @@ func TestFasthttpMiddleware(t *testing.T) {
 
 	middleware = fasthttp.NewMiddleware(limiter.New(store, rate))
 
-	requestHandler = func(ctx *libFastHttp.RequestCtx) {
+	requestHandler = func(ctx *libfasthttp.RequestCtx) {
 		switch string(ctx.Path()) {
 		case "/":
-			ctx.SetStatusCode(libFastHttp.StatusOK)
+			ctx.SetStatusCode(libfasthttp.StatusOK)
 			ctx.SetBodyString("hello")
 			break
 		}
@@ -82,14 +82,14 @@ func TestFasthttpMiddleware(t *testing.T) {
 		wg.Add(1)
 
 		go func() {
-			resp := libFastHttp.AcquireResponse()
-			req := libFastHttp.AcquireRequest()
+			resp := libfasthttp.AcquireResponse()
+			req := libfasthttp.AcquireRequest()
 			req.Header.SetHost("localhost:8081")
 			req.Header.SetRequestURI("/")
 			err := serve(middleware.Handle(requestHandler), req, resp)
 			is.Nil(err)
 
-			if resp.StatusCode() == libFastHttp.StatusOK {
+			if resp.StatusCode() == libfasthttp.StatusOK {
 				atomic.AddInt64(&counter, 1)
 			}
 
@@ -108,7 +108,7 @@ func TestFasthttpMiddleware(t *testing.T) {
 	is.NotZero(store)
 
 	j := 0
-	KeyGetter := func(ctx *libFastHttp.RequestCtx) string {
+	KeyGetter := func(ctx *libfasthttp.RequestCtx) string {
 		j++
 		return strconv.Itoa(j)
 	}
@@ -116,38 +116,38 @@ func TestFasthttpMiddleware(t *testing.T) {
 
 	is.NotZero(middleware)
 
-	requestHandler = func(ctx *libFastHttp.RequestCtx) {
+	requestHandler = func(ctx *libfasthttp.RequestCtx) {
 		switch string(ctx.Path()) {
 		case "/":
-			ctx.SetStatusCode(libFastHttp.StatusOK)
+			ctx.SetStatusCode(libfasthttp.StatusOK)
 			ctx.SetBodyString("hello")
 			break
 		}
 	}
 
 	for i := int64(1); i <= clients; i++ {
-		resp := libFastHttp.AcquireResponse()
-		req := libFastHttp.AcquireRequest()
+		resp := libfasthttp.AcquireResponse()
+		req := libfasthttp.AcquireRequest()
 		req.Header.SetHost("localhost:8081")
 		req.Header.SetRequestURI("/")
 		err := serve(middleware.Handle(requestHandler), req, resp)
 		is.Nil(err)
-		is.Equal(libFastHttp.StatusOK, resp.StatusCode(), strconv.Itoa(int(i)))
+		is.Equal(libfasthttp.StatusOK, resp.StatusCode(), strconv.Itoa(int(i)))
 	}
 }
 
-func serve(handler libFastHttp.RequestHandler, req *libFastHttp.Request, res *libFastHttp.Response) error {
+func serve(handler libfasthttp.RequestHandler, req *libfasthttp.Request, res *libfasthttp.Response) error {
 	ln := fasthttputil.NewInmemoryListener()
 	defer ln.Close()
 
 	go func() {
-		err := libFastHttp.Serve(ln, handler)
+		err := libfasthttp.Serve(ln, handler)
 		if err != nil {
 			panic(err)
 		}
 	}()
 
-	client := libFastHttp.Client{
+	client := libfasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) {
 			return ln.Dial()
 		},

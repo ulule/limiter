@@ -2,7 +2,7 @@ package fasthttp
 
 import (
 	"github.com/ulule/limiter/v3"
-	libFastHttp "github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp"
 	"strconv"
 )
 
@@ -30,9 +30,9 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) *Middleware {
 	return middleware
 }
 
-// Handle gin request.
-func (middleware *Middleware) Handle(next libFastHttp.RequestHandler) libFastHttp.RequestHandler {
-	return func(ctx *libFastHttp.RequestCtx) {
+// Handle fasthttp request.
+func (middleware *Middleware) Handle(next fasthttp.RequestHandler) fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
 		key := middleware.KeyGetter(ctx)
 		context, err := middleware.Limiter.Get(ctx, key)
 		if err != nil {
