@@ -30,7 +30,7 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) *Middleware {
 	return middleware
 }
 
-// Handler the middleware handler.
+// Handler handles a HTTP request.
 func (middleware *Middleware) Handler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		context, err := middleware.Limiter.Get(r.Context(), middleware.Limiter.GetIPKey(r))

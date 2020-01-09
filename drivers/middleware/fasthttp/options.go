@@ -4,7 +4,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-// Option is used to define Middleware configuration
+// Option is used to define Middleware configuration.
 type Option interface {
 	apply(middleware *Middleware)
 }
@@ -46,18 +46,18 @@ func DefaultLimitReachedHandler(ctx *fasthttp.RequestCtx) {
 	ctx.Response.SetBodyString("Limit exceeded")
 }
 
-// KeyGetter will define the rate limiter key given the gin Context
+// KeyGetter will define the rate limiter key given the fasthttp Context.
 type KeyGetter func(ctx *fasthttp.RequestCtx) string
 
-// WithKeyGetter will configure the Middleware to use the given KeyGetter
+// WithKeyGetter will configure the Middleware to use the given KeyGetter.
 func WithKeyGetter(KeyGetter KeyGetter) Option {
 	return option(func(middleware *Middleware) {
 		middleware.KeyGetter = KeyGetter
 	})
 }
 
-// DefaultKeyGetter is the default KeyGetter used by a new Middleware
-// It returns the Client IP address
+// DefaultKeyGetter is the default KeyGetter used by a new Middleware.
+// It returns the Client IP address.
 func DefaultKeyGetter(ctx *fasthttp.RequestCtx) string {
 	return ctx.RemoteIP().String()
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/ulule/limiter/v3"
 )
 
-// Middleware is the middleware for basic http.Handler.
+// Middleware is the middleware for gin.
 type Middleware struct {
 	Limiter        *limiter.Limiter
 	OnError        ErrorHandler
@@ -16,7 +16,7 @@ type Middleware struct {
 	KeyGetter      KeyGetter
 }
 
-// NewMiddleware return a new instance of a basic HTTP middleware.
+// NewMiddleware return a new instance of a gin middleware.
 func NewMiddleware(limiter *limiter.Limiter, options ...Option) gin.HandlerFunc {
 	middleware := &Middleware{
 		Limiter:        limiter,
