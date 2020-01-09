@@ -1,17 +1,19 @@
 package fasthttp_test
 
 import (
-	"github.com/stretchr/testify/require"
-	"github.com/ulule/limiter/v3"
-	"github.com/ulule/limiter/v3/drivers/middleware/fasthttp"
-	"github.com/ulule/limiter/v3/drivers/store/memory"
-	libfasthttp "github.com/valyala/fasthttp"
-	"github.com/valyala/fasthttp/fasthttputil"
 	"net"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	libfasthttp "github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp/fasthttputil"
+
+	"github.com/ulule/limiter/v3"
+	"github.com/ulule/limiter/v3/drivers/middleware/fasthttp"
+	"github.com/ulule/limiter/v3/drivers/store/memory"
 )
 
 func TestFasthttpMiddleware(t *testing.T) {
