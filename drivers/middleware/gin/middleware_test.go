@@ -103,13 +103,13 @@ func TestHTTPMiddleware(t *testing.T) {
 	store = memory.NewStore()
 	is.NotZero(store)
 
-	j := 0
-	KeyGetter := func(c *libgin.Context) string {
-		j++
-		return strconv.Itoa(j)
+	counter = int64(0)
+	keyGetter := func(c *libgin.Context) string {
+		v := atomic.AddInt64(&counter, 1)
+		return strconv.FormatInt(v, 10)
 	}
-	middleware = gin.NewMiddleware(limiter.New(store, rate), gin.WithKeyGetter(KeyGetter))
 
+	middleware = gin.NewMiddleware(limiter.New(store, rate), gin.WithKeyGetter(keyGetter))
 	is.NotZero(middleware)
 
 	router = libgin.New()
@@ -122,7 +122,7 @@ func TestHTTPMiddleware(t *testing.T) {
 		resp := httptest.NewRecorder()
 		router.ServeHTTP(resp, request)
 		// We should always be ok as the key changes for each request
-		is.Equal(http.StatusOK, resp.Code, strconv.Itoa(int(i)))
+		is.Equal(http.StatusOK, resp.Code, strconv.FormatInt(i, 10))
 	}
 
 }

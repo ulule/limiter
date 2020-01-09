@@ -33,7 +33,6 @@ func TestFasthttpMiddleware(t *testing.T) {
 		case "/":
 			ctx.SetStatusCode(libfasthttp.StatusOK)
 			ctx.SetBodyString("hello")
-			break
 		}
 	}
 
@@ -50,7 +49,7 @@ func TestFasthttpMiddleware(t *testing.T) {
 		req.Header.SetHost("localhost:8081")
 		req.Header.SetRequestURI("/")
 		err := serve(middleware.Handle(requestHandler), req, resp)
-		is.Nil(err)
+		is.NoError(err)
 
 		if i <= success {
 			is.Equal(resp.StatusCode(), libfasthttp.StatusOK)
@@ -73,7 +72,6 @@ func TestFasthttpMiddleware(t *testing.T) {
 		case "/":
 			ctx.SetStatusCode(libfasthttp.StatusOK)
 			ctx.SetBodyString("hello")
-			break
 		}
 	}
 
@@ -89,7 +87,7 @@ func TestFasthttpMiddleware(t *testing.T) {
 			req.Header.SetHost("localhost:8081")
 			req.Header.SetRequestURI("/")
 			err := serve(middleware.Handle(requestHandler), req, resp)
-			is.Nil(err)
+			is.NoError(err)
 
 			if resp.StatusCode() == libfasthttp.StatusOK {
 				atomic.AddInt64(&counter, 1)
@@ -109,13 +107,13 @@ func TestFasthttpMiddleware(t *testing.T) {
 	store = memory.NewStore()
 	is.NotZero(store)
 
-	j := 0
-	KeyGetter := func(ctx *libfasthttp.RequestCtx) string {
-		j++
-		return strconv.Itoa(j)
+	counter = int64(0)
+	keyGetter := func(c *libfasthttp.RequestCtx) string {
+		v := atomic.AddInt64(&counter, 1)
+		return strconv.FormatInt(v, 10)
 	}
-	middleware = fasthttp.NewMiddleware(limiter.New(store, rate), fasthttp.WithKeyGetter(KeyGetter))
 
+	middleware = fasthttp.NewMiddleware(limiter.New(store, rate), fasthttp.WithKeyGetter(keyGetter))
 	is.NotZero(middleware)
 
 	requestHandler = func(ctx *libfasthttp.RequestCtx) {
@@ -123,7 +121,6 @@ func TestFasthttpMiddleware(t *testing.T) {
 		case "/":
 			ctx.SetStatusCode(libfasthttp.StatusOK)
 			ctx.SetBodyString("hello")
-			break
 		}
 	}
 
@@ -133,14 +130,19 @@ func TestFasthttpMiddleware(t *testing.T) {
 		req.Header.SetHost("localhost:8081")
 		req.Header.SetRequestURI("/")
 		err := serve(middleware.Handle(requestHandler), req, resp)
-		is.Nil(err)
-		is.Equal(libfasthttp.StatusOK, resp.StatusCode(), strconv.Itoa(int(i)))
+		is.NoError(err)
+		is.Equal(libfasthttp.StatusOK, resp.StatusCode(), strconv.FormatInt(i, 10))
 	}
 }
 
 func serve(handler libfasthttp.RequestHandler, req *libfasthttp.Request, res *libfasthttp.Response) error {
 	ln := fasthttputil.NewInmemoryListener()
-	defer ln.Close()
+	defer func() {
+		err := ln.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	go func() {
 		err := libfasthttp.Serve(ln, handler)
