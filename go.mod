@@ -8,7 +8,7 @@ require (
 	github.com/klauspost/compress v1.9.6 // indirect
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
-	github.com/pkg/errors v0.9.0
+	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.4.0
 	github.com/valyala/fasthttp v1.8.0
 )
