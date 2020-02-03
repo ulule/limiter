@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/gin-gonic/gin v1.5.0
-	github.com/go-redis/redis v6.15.6+incompatible
+	github.com/go-redis/redis v6.15.7+incompatible
 	github.com/klauspost/compress v1.9.6 // indirect
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
