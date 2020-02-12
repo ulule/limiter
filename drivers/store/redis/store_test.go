@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	libredis "github.com/go-redis/redis"
+	libredis "github.com/go-redis/redis/v7"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ulule/limiter/v3"

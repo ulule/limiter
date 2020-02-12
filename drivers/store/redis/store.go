@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	libredis "github.com/go-redis/redis"
+	libredis "github.com/go-redis/redis/v7"
 	"github.com/pkg/errors"
 
 	"github.com/ulule/limiter/v3"
