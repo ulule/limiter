@@ -7,6 +7,6 @@ require (
 	github.com/go-redis/redis/v7 v7.1.0
 	github.com/klauspost/compress v1.9.6 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.5.0
+	github.com/stretchr/testify v1.5.1
 	github.com/valyala/fasthttp v1.9.0
 )
