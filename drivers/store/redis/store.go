@@ -176,7 +176,7 @@ func (store *Store) doPeekValue(rtx *libredis.Tx, key string) (int64, time.Durat
 
 // peekValue will retrieve the counter and its expiration for given key.
 func peekValue(rtx *libredis.Tx, key string) (int64, time.Duration, error) {
-	pipe := rtx.Pipeline()
+	pipe := rtx.TxPipeline()
 	value := pipe.Get(key)
 	expire := pipe.PTTL(key)
 
@@ -240,7 +240,7 @@ func (store *Store) doUpdateValue(rtx *libredis.Tx, key string,
 
 // updateValue will try to increment the counter identified by given key.
 func updateValue(rtx *libredis.Tx, key string, expiration time.Duration) (int64, time.Duration, error) {
-	pipe := rtx.Pipeline()
+	pipe := rtx.TxPipeline()
 	value := pipe.Incr(key)
 	expire := pipe.PTTL(key)
 
