@@ -125,4 +125,34 @@ func TestHTTPMiddleware(t *testing.T) {
 		is.Equal(http.StatusOK, resp.Code, strconv.FormatInt(i, 10))
 	}
 
+	//
+	// Test ExcludedKey
+	//
+	store = memory.NewStore()
+	is.NotZero(store)
+	counter = int64(0)
+	middleware = gin.NewMiddleware(limiter.New(store, rate),
+		gin.WithKeyGetter(func(c *libgin.Context) string {
+			v := atomic.AddInt64(&counter, 1)
+			return strconv.FormatInt(v%2, 10)
+		}),
+		gin.WithExcludedKey(gin.DefaultExcludedKey([]string{"1"})),
+	)
+	is.NotZero(middleware)
+
+	router = libgin.New()
+	router.Use(middleware)
+	router.GET("/", func(c *libgin.Context) {
+		c.String(http.StatusOK, "hello")
+	})
+	success = 20
+	for i := int64(1); i < clients; i++ {
+		resp := httptest.NewRecorder()
+		router.ServeHTTP(resp, request)
+		if i <= success || i%2 == 1 {
+			is.Equal(http.StatusOK, resp.Code, strconv.FormatInt(i, 10))
+		} else {
+			is.Equal(resp.Code, http.StatusTooManyRequests)
+		}
+	}
 }
