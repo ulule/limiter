@@ -14,7 +14,6 @@ type Middleware struct {
 	OnError        ErrorHandler
 	OnLimitReached LimitReachedHandler
 	KeyGetter      KeyGetter
-	ExcludedKey    ExcludedKey
 }
 
 // NewMiddleware return a new instance of a gin middleware.
@@ -38,11 +37,6 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) gin.HandlerFunc 
 // Handle gin request.
 func (middleware *Middleware) Handle(c *gin.Context) {
 	key := middleware.KeyGetter(c)
-	if middleware.ExcludedKey != nil && middleware.ExcludedKey(key) {
-		c.Next()
-		return
-	}
-
 	context, err := middleware.Limiter.Get(c, key)
 	if err != nil {
 		middleware.OnError(c, err)

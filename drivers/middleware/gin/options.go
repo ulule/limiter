@@ -62,26 +62,3 @@ func WithKeyGetter(KeyGetter KeyGetter) Option {
 func DefaultKeyGetter(c *gin.Context) string {
 	return c.ClientIP()
 }
-
-// ExcludedKey is function type used to check whether the key should be excluded or not
-type ExcludedKey func(key string) bool
-
-
-// DefaultExcludedKey is the default function returns ExcludedKey
-func DefaultExcludedKey(keys []string) ExcludedKey {
-	m := make(map[string]struct{}, len(keys))
-	for _, key := range keys {
-		m[key] = struct{}{}
-	}
-	return func(key string) bool {
-		_, ok := m[key]
-		return ok
-	}
-}
-
-// WithExcludedKey will configure the Middleware to use the given ExcludedKey.
-func WithExcludedKey(fn ExcludedKey) Option {
-	return option(func(middleware *Middleware) {
-		middleware.ExcludedKey = fn
-	})
-}
