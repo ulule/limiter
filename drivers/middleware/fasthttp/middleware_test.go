@@ -16,6 +16,7 @@ import (
 	"github.com/ulule/limiter/v3/drivers/store/memory"
 )
 
+// nolint: gocyclo
 func TestFasthttpMiddleware(t *testing.T) {
 	is := require.New(t)
 
