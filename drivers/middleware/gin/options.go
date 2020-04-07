@@ -62,3 +62,10 @@ func WithKeyGetter(KeyGetter KeyGetter) Option {
 func DefaultKeyGetter(c *gin.Context) string {
 	return c.ClientIP()
 }
+
+// WithExcludedKey will configure the Middleware to use the given function.
+func WithExcludedKey(fn func(string) bool) Option {
+	return option(func(middleware *Middleware) {
+		middleware.ExcludedKey = fn
+	})
+}
