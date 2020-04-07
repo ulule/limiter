@@ -9,10 +9,10 @@ import (
 
 // Middleware is the middleware for basic http.Handler.
 type Middleware struct {
-	Limiter            *limiter.Limiter
-	OnError            ErrorHandler
-	OnLimitReached     LimitReachedHandler
-	TrustForwardHeader bool
+	Limiter        *limiter.Limiter
+	OnError        ErrorHandler
+	OnLimitReached LimitReachedHandler
+	ExcludedKey    func(string) bool
 }
 
 // NewMiddleware return a new instance of a basic HTTP middleware.
@@ -21,6 +21,7 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) *Middleware {
 		Limiter:        limiter,
 		OnError:        DefaultErrorHandler,
 		OnLimitReached: DefaultLimitReachedHandler,
+		ExcludedKey:    nil,
 	}
 
 	for _, option := range options {
@@ -33,7 +34,13 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) *Middleware {
 // Handler handles a HTTP request.
 func (middleware *Middleware) Handler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		context, err := middleware.Limiter.Get(r.Context(), middleware.Limiter.GetIPKey(r))
+		key := middleware.Limiter.GetIPKey(r)
+		if middleware.ExcludedKey != nil && middleware.ExcludedKey(key) {
+			h.ServeHTTP(w, r)
+			return
+		}
+
+		context, err := middleware.Limiter.Get(r.Context(), key)
 		if err != nil {
 			middleware.OnError(w, r, err)
 			return

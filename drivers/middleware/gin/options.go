@@ -51,9 +51,9 @@ func DefaultLimitReachedHandler(c *gin.Context) {
 type KeyGetter func(c *gin.Context) string
 
 // WithKeyGetter will configure the Middleware to use the given KeyGetter.
-func WithKeyGetter(KeyGetter KeyGetter) Option {
+func WithKeyGetter(handler KeyGetter) Option {
 	return option(func(middleware *Middleware) {
-		middleware.KeyGetter = KeyGetter
+		middleware.KeyGetter = handler
 	})
 }
 
@@ -63,9 +63,9 @@ func DefaultKeyGetter(c *gin.Context) string {
 	return c.ClientIP()
 }
 
-// WithExcludedKey will configure the Middleware to use the given function.
-func WithExcludedKey(fn func(string) bool) Option {
+// WithExcludedKey will configure the Middleware to ignore key(s) using the given function.
+func WithExcludedKey(handler func(string) bool) Option {
 	return option(func(middleware *Middleware) {
-		middleware.ExcludedKey = fn
+		middleware.ExcludedKey = handler
 	})
 }
