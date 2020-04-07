@@ -14,7 +14,7 @@ type Middleware struct {
 	OnError        ErrorHandler
 	OnLimitReached LimitReachedHandler
 	KeyGetter      KeyGetter
-	ExcludedKey    ExcludedKey
+	ExcludedKey    func(string) bool
 }
 
 // NewMiddleware return a new instance of a gin middleware.

@@ -131,12 +131,15 @@ func TestHTTPMiddleware(t *testing.T) {
 	store = memory.NewStore()
 	is.NotZero(store)
 	counter = int64(0)
+	excludedKeyFn := func(key string) bool {
+		return key == "1"
+	}
 	middleware = gin.NewMiddleware(limiter.New(store, rate),
 		gin.WithKeyGetter(func(c *libgin.Context) string {
 			v := atomic.AddInt64(&counter, 1)
 			return strconv.FormatInt(v%2, 10)
 		}),
-		gin.WithExcludedKey(gin.DefaultExcludedKey([]string{"1"})),
+		gin.WithExcludedKey(excludedKeyFn),
 	)
 	is.NotZero(middleware)
 
