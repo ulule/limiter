@@ -24,6 +24,7 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) gin.HandlerFunc 
 		OnError:        DefaultErrorHandler,
 		OnLimitReached: DefaultLimitReachedHandler,
 		KeyGetter:      DefaultKeyGetter,
+		ExcludedKey:    nil,
 	}
 
 	for _, option := range options {

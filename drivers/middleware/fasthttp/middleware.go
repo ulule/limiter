@@ -12,6 +12,7 @@ type Middleware struct {
 	OnError        ErrorHandler
 	OnLimitReached LimitReachedHandler
 	KeyGetter      KeyGetter
+	ExcludedKey    func(string) bool
 }
 
 // NewMiddleware return a new instance of a fasthttp middleware.
@@ -21,6 +22,7 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) *Middleware {
 		OnError:        DefaultErrorHandler,
 		OnLimitReached: DefaultLimitReachedHandler,
 		KeyGetter:      DefaultKeyGetter,
+		ExcludedKey:    nil,
 	}
 
 	for _, option := range options {
@@ -34,6 +36,11 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) *Middleware {
 func (middleware *Middleware) Handle(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		key := middleware.KeyGetter(ctx)
+		if middleware.ExcludedKey != nil && middleware.ExcludedKey(key) {
+			next(ctx)
+			return
+		}
+
 		context, err := middleware.Limiter.Get(ctx, key)
 		if err != nil {
 			middleware.OnError(ctx, err)

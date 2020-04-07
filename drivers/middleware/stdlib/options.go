@@ -44,3 +44,10 @@ func WithLimitReachedHandler(handler LimitReachedHandler) Option {
 func DefaultLimitReachedHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Limit exceeded", http.StatusTooManyRequests)
 }
+
+// WithExcludedKey will configure the Middleware to ignore key(s) using the given function.
+func WithExcludedKey(handler func(string) bool) Option {
+	return option(func(middleware *Middleware) {
+		middleware.ExcludedKey = handler
+	})
+}
