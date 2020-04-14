@@ -93,6 +93,14 @@ store := memory.NewStore()
 // Then, create the limiter instance which takes the store and the rate as arguments.
 // Now, you can give this instance to any supported middleware.
 instance := limiter.New(store, rate)
+
+// Alternatively, you can pass options to the limiter instance with several options.
+instance := limiter.New(store, rate, limiter.WithTrustForwardHeader(true), limiter.WithIPv6Mask(mask))
+
+// Finally, give the limiter instance to your middleware initializer.
+import "github.com/ulule/limiter/v3/drivers/middleware/stdlib"
+
+middleware := stdlib.NewMiddleware(instance)
 ```
 
 See middleware examples:
