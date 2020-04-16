@@ -208,14 +208,14 @@ func (cache *Cache) Get(key string, duration time.Duration) (int64, time.Time) {
 func (cache *Cache) Clean() {
 	cache.Range(func(key string, counter *Counter) {
 		if counter.Expired() {
-			cache.counters.Delete(key)
+			cache.Delete(key)
 		}
 	})
 }
 
 // Reset changes the key's value and resets the expiration.
 func (cache *Cache) Reset(key string, duration time.Duration) (int64, time.Time) {
-	cache.counters.Delete(key)
+	cache.Delete(key)
 
 	expiration := time.Now().Add(duration).UnixNano()
 	return 0, time.Unix(0, expiration)
