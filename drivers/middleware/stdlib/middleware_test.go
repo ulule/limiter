@@ -1,6 +1,7 @@
 package stdlib_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -9,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/ulule/limiter/v3"
+	limiter "github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/middleware/stdlib"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
 )
@@ -17,7 +18,9 @@ import (
 func TestHTTPMiddleware(t *testing.T) {
 	is := require.New(t)
 
-	request, err := http.NewRequest("GET", "/", nil)
+	goodContext := context.WithValue(context.Background(), "person-id", "abc-123-456-def")
+
+	request, err := http.NewRequestWithContext(goodContext, "GET", "/", nil)
 	is.NoError(err)
 	is.NotNil(request)
 

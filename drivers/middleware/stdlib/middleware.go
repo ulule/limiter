@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ulule/limiter/v3"
+	limiter "github.com/ulule/limiter/v3"
 )
 
 // Middleware is the middleware for basic http.Handler.
@@ -34,7 +34,8 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) *Middleware {
 // Handler handles a HTTP request.
 func (middleware *Middleware) Handler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		key := middleware.Limiter.GetIPKey(r)
+		ctx := r.Context()
+		key := ctx.Value("person-id").(string)
 		if middleware.ExcludedKey != nil && middleware.ExcludedKey(key) {
 			h.ServeHTTP(w, r)
 			return
