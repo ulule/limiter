@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ulule/limiter/v3"
-	"github.com/ulule/limiter/v3/drivers/store/common"
+	limiter "github.com/catch-co/limiter/v3"
+	"github.com/catch-co/limiter/v3/drivers/store/common"
 )
 
 // Store is the in-memory store.

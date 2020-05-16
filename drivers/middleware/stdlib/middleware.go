@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	limiter "github.com/ulule/limiter/v3"
+	limiter "github.com/catch-co/limiter/v3"
 )
 
 // Middleware is the middleware for basic http.Handler.

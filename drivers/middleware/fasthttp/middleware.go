@@ -1,9 +1,10 @@
 package fasthttp
 
 import (
-	"github.com/ulule/limiter/v3"
-	"github.com/valyala/fasthttp"
 	"strconv"
+
+	limiter "github.com/catch-co/limiter/v3"
+	"github.com/valyala/fasthttp"
 )
 
 // Middleware is the middleware for fasthttp.
