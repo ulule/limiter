@@ -33,12 +33,11 @@ func NewRateFromFormatted(formatted string) (Rate, error) {
 
 	limit, period := values[0], strings.ToUpper(values[1])
 
-	duration, ok := periods[period]
+	p, ok := periods[period]
 	if !ok {
 		return rate, errors.Errorf("incorrect period '%s'", period)
 	}
 
-	p := 1 * duration
 	l, err := strconv.ParseInt(limit, 10, 64)
 	if err != nil {
 		return rate, errors.Errorf("incorrect limit '%s'", limit)
