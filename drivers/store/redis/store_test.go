@@ -8,6 +8,7 @@ import (
 
 	libredis "github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/require"
+
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/redis"
 	"github.com/ulule/limiter/v3/drivers/store/tests"

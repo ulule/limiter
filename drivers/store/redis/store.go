@@ -162,7 +162,7 @@ func (store *Store) evalSHA(ctx context.Context, sha string, keys []string, args
 			cmd.SetErr(err)
 			return cmd
 		}
-		cmd = store.client.EvalSha(ctx, store.luaPeekSHA, keys)
+		cmd = store.client.EvalSha(ctx, sha, keys)
 	}
 	return cmd
 }
