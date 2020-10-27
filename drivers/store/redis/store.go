@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	libredis "github.com/go-redis/redis/v8"
@@ -63,6 +64,9 @@ type Store struct {
 	luaIncrSHA string
 	// luaPeekSHA is the SHA of peek and expire key script
 	luaPeekSHA string
+	// hasLuaScriptLoaded was used to check whether the lua script was loaded or not
+	hasLuaScriptLoaded bool
+	mu                 sync.Mutex
 }
 
 // NewStore returns an instance of redis store with defaults.
@@ -77,9 +81,10 @@ func NewStore(client Client) (limiter.Store, error) {
 // NewStoreWithOptions returns an instance of redis store with options.
 func NewStoreWithOptions(client Client, options limiter.StoreOptions) (limiter.Store, error) {
 	store := &Store{
-		client:   client,
-		Prefix:   options.Prefix,
-		MaxRetry: options.MaxRetry,
+		client:             client,
+		Prefix:             options.Prefix,
+		MaxRetry:           options.MaxRetry,
+		hasLuaScriptLoaded: false,
 	}
 
 	if store.MaxRetry <= 0 {
@@ -93,6 +98,11 @@ func NewStoreWithOptions(client Client, options limiter.StoreOptions) (limiter.S
 
 // preloadLuaScripts would preload the  incr and peek lua script
 func (store *Store) preloadLuaScripts(ctx context.Context) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	if store.hasLuaScriptLoaded {
+		return nil
+	}
 	incrLuaSHA, err := store.client.ScriptLoad(ctx, luaIncrScript).Result()
 	if err != nil {
 		return errors.Wrap(err, "failed to load incr lua script")
@@ -103,6 +113,7 @@ func (store *Store) preloadLuaScripts(ctx context.Context) error {
 	}
 	store.luaIncrSHA = incrLuaSHA
 	store.luaPeekSHA = peekLuaSHA
+	store.hasLuaScriptLoaded = true
 	return nil
 }
 
@@ -157,6 +168,9 @@ func (store *Store) evalSHA(ctx context.Context, sha string, keys []string, args
 		if !isLuaScriptGone(err) {
 			return cmd
 		}
+		store.mu.Lock()
+		store.hasLuaScriptLoaded = false
+		store.mu.Unlock()
 		if err := store.preloadLuaScripts(ctx); err != nil {
 			cmd = libredis.NewCmd(ctx)
 			cmd.SetErr(err)
