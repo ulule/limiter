@@ -108,3 +108,26 @@ func newRedisClient() (*libredis.Client, error) {
 	client := libredis.NewClient(opt)
 	return client, nil
 }
+
+func BenchmarkGet(b *testing.B) {
+	is := require.New(b)
+	client, err := newRedisClient()
+	is.NoError(err)
+	is.NotNil(client)
+	store, err := redis.NewStoreWithOptions(client, limiter.StoreOptions{
+		Prefix:   "limiter:redis:benchmark",
+		MaxRetry: 3,
+	})
+	is.NoError(err)
+	is.NotNil(store)
+	limiter := limiter.New(store, limiter.Rate{
+		Limit:  100000,
+		Period: 10 * time.Second,
+	})
+
+	for i := 0; i < b.N; i++ {
+		lctx, err := limiter.Get(context.TODO(), "foo")
+		is.NoError(err)
+		is.NotZero(lctx)
+	}
+}
