@@ -92,7 +92,7 @@ func TestRedisClientExpiration(t *testing.T) {
 	is.Greater(actual, expected)
 }
 
-func BenchmarkRedisSequentialAccess(b *testing.B) {
+func BenchmarkRedisStoreSequentialAccess(b *testing.B) {
 	is := require.New(b)
 
 	client, err := newRedisClient()
@@ -108,7 +108,7 @@ func BenchmarkRedisSequentialAccess(b *testing.B) {
 	tests.BenchmarkStoreSequentialAccess(b, store)
 }
 
-func BenchmarkRedisConcurrentAccess(b *testing.B) {
+func BenchmarkRedisStoreConcurrentAccess(b *testing.B) {
 	is := require.New(b)
 
 	client, err := newRedisClient()
