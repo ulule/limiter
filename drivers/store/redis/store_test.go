@@ -22,8 +22,7 @@ func TestRedisStoreSequentialAccess(t *testing.T) {
 	is.NotNil(client)
 
 	store, err := redis.NewStoreWithOptions(client, limiter.StoreOptions{
-		Prefix:   "limiter:redis:sequential",
-		MaxRetry: 3,
+		Prefix: "limiter:redis:sequential-test",
 	})
 	is.NoError(err)
 	is.NotNil(store)
@@ -39,8 +38,7 @@ func TestRedisStoreConcurrentAccess(t *testing.T) {
 	is.NotNil(client)
 
 	store, err := redis.NewStoreWithOptions(client, limiter.StoreOptions{
-		Prefix:   "limiter:redis:concurrent",
-		MaxRetry: 7,
+		Prefix: "limiter:redis:concurrent-test",
 	})
 	is.NoError(err)
 	is.NotNil(store)
@@ -94,6 +92,38 @@ func TestRedisClientExpiration(t *testing.T) {
 	is.Greater(actual, expected)
 }
 
+func BenchmarkRedisSequentialAccess(b *testing.B) {
+	is := require.New(b)
+
+	client, err := newRedisClient()
+	is.NoError(err)
+	is.NotNil(client)
+
+	store, err := redis.NewStoreWithOptions(client, limiter.StoreOptions{
+		Prefix: "limiter:redis:sequential-benchmark",
+	})
+	is.NoError(err)
+	is.NotNil(store)
+
+	tests.BenchmarkStoreSequentialAccess(b, store)
+}
+
+func BenchmarkRedisConcurrentAccess(b *testing.B) {
+	is := require.New(b)
+
+	client, err := newRedisClient()
+	is.NoError(err)
+	is.NotNil(client)
+
+	store, err := redis.NewStoreWithOptions(client, limiter.StoreOptions{
+		Prefix: "limiter:redis:concurrent-benchmark",
+	})
+	is.NoError(err)
+	is.NotNil(store)
+
+	tests.BenchmarkStoreConcurrentAccess(b, store)
+}
+
 func newRedisClient() (*libredis.Client, error) {
 	uri := "redis://localhost:6379/0"
 	if os.Getenv("REDIS_URI") != "" {
@@ -107,27 +137,4 @@ func newRedisClient() (*libredis.Client, error) {
 
 	client := libredis.NewClient(opt)
 	return client, nil
-}
-
-func BenchmarkGet(b *testing.B) {
-	is := require.New(b)
-	client, err := newRedisClient()
-	is.NoError(err)
-	is.NotNil(client)
-	store, err := redis.NewStoreWithOptions(client, limiter.StoreOptions{
-		Prefix:   "limiter:redis:benchmark",
-		MaxRetry: 3,
-	})
-	is.NoError(err)
-	is.NotNil(store)
-	limiter := limiter.New(store, limiter.Rate{
-		Limit:  100000,
-		Period: 10 * time.Second,
-	})
-
-	for i := 0; i < b.N; i++ {
-		lctx, err := limiter.Get(context.TODO(), "foo")
-		is.NoError(err)
-		is.NotZero(lctx)
-	}
 }
