@@ -142,3 +142,41 @@ func TestStoreConcurrentAccess(t *testing.T, store limiter.Store) {
 	}
 	wg.Wait()
 }
+
+// BenchmarkStoreSequentialAccess executes a benchmark against a store without parallel setting.
+func BenchmarkStoreSequentialAccess(b *testing.B, store limiter.Store) {
+	is := require.New(b)
+	ctx := context.Background()
+
+	limiter := limiter.New(store, limiter.Rate{
+		Limit:  100000,
+		Period: 10 * time.Second,
+	})
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		lctx, err := limiter.Get(ctx, "foo")
+		is.NoError(err)
+		is.NotZero(lctx)
+	}
+}
+
+// BenchmarkStoreConcurrentAccess executes a benchmark against a store with parallel setting.
+func BenchmarkStoreConcurrentAccess(b *testing.B, store limiter.Store) {
+	is := require.New(b)
+	ctx := context.Background()
+
+	limiter := limiter.New(store, limiter.Rate{
+		Limit:  100000,
+		Period: 10 * time.Second,
+	})
+
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			lctx, err := limiter.Get(ctx, "foo")
+			is.NoError(err)
+			is.NotZero(lctx)
+		}
+	})
+}
