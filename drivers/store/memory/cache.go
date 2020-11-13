@@ -63,10 +63,7 @@ func (counter *Counter) Expired() bool {
 	counter.mutex.RLock()
 	defer counter.mutex.RUnlock()
 
-	if counter.expiration == 0 {
-		return true
-	}
-	return time.Now().UnixNano() > counter.expiration
+	return counter.expiration == 0 || time.Now().UnixNano() > counter.expiration
 }
 
 // Load returns the value and the expiration of this counter.
@@ -200,7 +197,6 @@ func (cache *Cache) Get(key string, duration time.Duration) (int64, time.Time) {
 	}
 
 	value, expiration := counter.Load(expiration)
-
 	return value, time.Unix(0, expiration)
 }
 
