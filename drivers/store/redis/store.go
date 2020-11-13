@@ -3,24 +3,53 @@ package redis
 import (
 	"context"
 	"fmt"
+	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
-	libredis "github.com/go-redis/redis/v7"
+	libredis "github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
 
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/common"
 )
 
+const (
+	luaIncrScript = `
+local key = KEYS[1]
+local count = tonumber(ARGV[1])
+local ttl = tonumber(ARGV[2])
+local ret = redis.call("incrby", key, ARGV[1])
+if ret == count then
+	if ttl > 0 then
+		redis.call("pexpire", key, ARGV[2])
+	end
+	return {ret, ttl}
+end
+ttl = redis.call("pttl", key)
+return {ret, ttl}
+`
+	luaPeekScript = `
+local key = KEYS[1]
+local v = redis.call("get", key)
+if v == false then
+	return {0, 0}
+end
+local ttl = redis.call("pttl", key)
+return {tonumber(v), ttl}
+`
+)
+
 // Client is an interface thats allows to use a redis cluster or a redis single client seamlessly.
 type Client interface {
-	Ping() *libredis.StatusCmd
-	Get(key string) *libredis.StringCmd
-	Set(key string, value interface{}, expiration time.Duration) *libredis.StatusCmd
-	Watch(handler func(*libredis.Tx) error, keys ...string) error
-	Del(keys ...string) *libredis.IntCmd
-	SetNX(key string, value interface{}, expiration time.Duration) *libredis.BoolCmd
-	Eval(script string, keys []string, args ...interface{}) *libredis.Cmd
+	Get(ctx context.Context, key string) *libredis.StringCmd
+	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *libredis.StatusCmd
+	Watch(ctx context.Context, handler func(*libredis.Tx) error, keys ...string) error
+	Del(ctx context.Context, keys ...string) *libredis.IntCmd
+	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) *libredis.BoolCmd
+	EvalSha(ctx context.Context, sha string, keys []string, args ...interface{}) *libredis.Cmd
+	ScriptLoad(ctx context.Context, script string) *libredis.StringCmd
 }
 
 // Store is the redis store.
@@ -28,9 +57,18 @@ type Store struct {
 	// Prefix used for the key.
 	Prefix string
 	// MaxRetry is the maximum number of retry under race conditions.
+	// Deprecated: this option is no longer required since all operations are atomic now.
 	MaxRetry int
 	// client used to communicate with redis server.
 	client Client
+	// luaMutex is a mutex used to avoid concurrent access on luaIncrSHA and luaPeekSHA.
+	luaMutex sync.RWMutex
+	// luaLoaded is used for CAS and reduce pressure on luaMutex.
+	luaLoaded uint32
+	// luaIncrSHA is the SHA of increase and expire key script.
+	luaIncrSHA string
+	// luaPeekSHA is the SHA of peek and expire key script.
+	luaPeekSHA string
 }
 
 // NewStore returns an instance of redis store with defaults.
@@ -50,11 +88,7 @@ func NewStoreWithOptions(client Client, options limiter.StoreOptions) (limiter.S
 		MaxRetry: options.MaxRetry,
 	}
 
-	if store.MaxRetry <= 0 {
-		store.MaxRetry = 1
-	}
-
-	_, err := store.ping()
+	err := store.preloadLuaScripts(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -65,263 +99,157 @@ func NewStoreWithOptions(client Client, options limiter.StoreOptions) (limiter.S
 // Get returns the limit for given identifier.
 func (store *Store) Get(ctx context.Context, key string, rate limiter.Rate) (limiter.Context, error) {
 	key = fmt.Sprintf("%s:%s", store.Prefix, key)
-	now := time.Now()
-
-	lctx := limiter.Context{}
-	onWatch := func(rtx *libredis.Tx) error {
-
-		created, err := store.doSetValue(rtx, key, rate.Period)
-		if err != nil {
-			return err
-		}
-
-		if created {
-			expiration := now.Add(rate.Period)
-			lctx = common.GetContextFromState(now, rate, expiration, 1)
-			return nil
-		}
-
-		count, ttl, err := store.doUpdateValue(rtx, key, rate.Period)
-		if err != nil {
-			return err
-		}
-
-		expiration := now.Add(rate.Period)
-		if ttl > 0 {
-			expiration = now.Add(ttl)
-		}
-
-		lctx = common.GetContextFromState(now, rate, expiration, count)
-		return nil
-	}
-
-	err := store.client.Watch(onWatch, key)
+	cmd := store.evalSHA(ctx, store.getLuaIncrSHA, []string{key}, 1, rate.Period.Milliseconds())
+	count, ttl, err := parseCountAndTTL(cmd)
 	if err != nil {
-		err = errors.Wrapf(err, "limiter: cannot get value for %s", key)
 		return limiter.Context{}, err
 	}
 
-	return lctx, nil
+	now := time.Now()
+	expiration := now.Add(rate.Period)
+	if ttl > 0 {
+		expiration = now.Add(time.Duration(ttl) * time.Millisecond)
+	}
+
+	return common.GetContextFromState(now, rate, expiration, count), nil
 }
 
 // Peek returns the limit for given identifier, without modification on current values.
 func (store *Store) Peek(ctx context.Context, key string, rate limiter.Rate) (limiter.Context, error) {
 	key = fmt.Sprintf("%s:%s", store.Prefix, key)
-	now := time.Now()
-
-	lctx := limiter.Context{}
-	onWatch := func(rtx *libredis.Tx) error {
-		count, ttl, err := store.doPeekValue(rtx, key)
-		if err != nil {
-			return err
-		}
-
-		expiration := now.Add(rate.Period)
-		if ttl > 0 {
-			expiration = now.Add(ttl)
-		}
-
-		lctx = common.GetContextFromState(now, rate, expiration, count)
-		return nil
-	}
-
-	err := store.client.Watch(onWatch, key)
+	cmd := store.evalSHA(ctx, store.getLuaPeekSHA, []string{key})
+	count, ttl, err := parseCountAndTTL(cmd)
 	if err != nil {
-		err = errors.Wrapf(err, "limiter: cannot peek value for %s", key)
 		return limiter.Context{}, err
 	}
 
-	return lctx, nil
+	now := time.Now()
+	expiration := now.Add(rate.Period)
+	if ttl > 0 {
+		expiration = now.Add(time.Duration(ttl) * time.Millisecond)
+	}
+
+	return common.GetContextFromState(now, rate, expiration, count), nil
 }
 
 // Reset returns the limit for given identifier which is set to zero.
 func (store *Store) Reset(ctx context.Context, key string, rate limiter.Rate) (limiter.Context, error) {
 	key = fmt.Sprintf("%s:%s", store.Prefix, key)
-	now := time.Now()
-
-	lctx := limiter.Context{}
-	onWatch := func(rtx *libredis.Tx) error {
-
-		err := store.doResetValue(rtx, key)
-		if err != nil {
-			return err
-		}
-
-		count := int64(0)
-		expiration := now.Add(rate.Period)
-
-		lctx = common.GetContextFromState(now, rate, expiration, count)
-		return nil
-	}
-
-	err := store.client.Watch(onWatch, key)
+	_, err := store.client.Del(ctx, key).Result()
 	if err != nil {
-		err = errors.Wrapf(err, "limiter: cannot reset value for %s", key)
 		return limiter.Context{}, err
 	}
 
-	return lctx, nil
+	count := int64(0)
+	now := time.Now()
+	expiration := now.Add(rate.Period)
+
+	return common.GetContextFromState(now, rate, expiration, count), nil
 }
 
-// doPeekValue will execute peekValue with a retry mecanism (optimistic locking) until store.MaxRetry is reached.
-func (store *Store) doPeekValue(rtx *libredis.Tx, key string) (int64, time.Duration, error) {
-	for i := 0; i < store.MaxRetry; i++ {
-		count, ttl, err := peekValue(rtx, key)
-		if err == nil {
-			return count, ttl, nil
-		}
+// preloadLuaScripts preloads the "incr" and "peek" lua scripts.
+func (store *Store) preloadLuaScripts(ctx context.Context) error {
+	// Verify if we need to load lua scripts.
+	// Inspired by sync.Once.
+	if atomic.LoadUint32(&store.luaLoaded) == 0 {
+		return store.loadLuaScripts(ctx)
 	}
-	return 0, 0, errors.New("retry limit exceeded")
+	return nil
 }
 
-// peekValue will retrieve the counter and its expiration for given key.
-func peekValue(rtx *libredis.Tx, key string) (int64, time.Duration, error) {
-	pipe := rtx.TxPipeline()
-	value := pipe.Get(key)
-	expire := pipe.PTTL(key)
+// reloadLuaScripts forces a reload of "incr" and "peek" lua scripts.
+func (store *Store) reloadLuaScripts(ctx context.Context) error {
+	// Reset lua scripts loaded state.
+	// Inspired by sync.Once.
+	atomic.StoreUint32(&store.luaLoaded, 0)
+	return store.loadLuaScripts(ctx)
+}
 
-	_, err := pipe.Exec()
-	if err != nil && err != libredis.Nil {
-		return 0, 0, err
+// loadLuaScripts load "incr" and "peek" lua scripts.
+// WARNING: Please use preloadLuaScripts or reloadLuaScripts, instead of this one.
+func (store *Store) loadLuaScripts(ctx context.Context) error {
+	store.luaMutex.Lock()
+	defer store.luaMutex.Unlock()
+
+	// Check if scripts are already loaded.
+	if atomic.LoadUint32(&store.luaLoaded) != 0 {
+		return nil
 	}
 
-	count, err := value.Int64()
-	if err != nil && err != libredis.Nil {
-		return 0, 0, err
-	}
-
-	ttl, err := expire.Result()
+	luaIncrSHA, err := store.client.ScriptLoad(ctx, luaIncrScript).Result()
 	if err != nil {
-		return 0, 0, err
+		return errors.Wrap(err, `failed to load "incr" lua script`)
 	}
 
-	return count, ttl, nil
-}
-
-// doSetValue will execute setValue with a retry mecanism (optimistic locking) until store.MaxRetry is reached.
-func (store *Store) doSetValue(rtx *libredis.Tx, key string, expiration time.Duration) (bool, error) {
-	for i := 0; i < store.MaxRetry; i++ {
-		created, err := setValue(rtx, key, expiration)
-		if err == nil {
-			return created, nil
-		}
-	}
-	return false, errors.New("retry limit exceeded")
-}
-
-// setValue will try to initialize a new counter if given key doesn't exists.
-func setValue(rtx *libredis.Tx, key string, expiration time.Duration) (bool, error) {
-	value := rtx.SetNX(key, 1, expiration)
-
-	created, err := value.Result()
+	luaPeekSHA, err := store.client.ScriptLoad(ctx, luaPeekScript).Result()
 	if err != nil {
-		return false, err
+		return errors.Wrap(err, `failed to load "peek" lua script`)
 	}
 
-	return created, nil
-}
+	store.luaIncrSHA = luaIncrSHA
+	store.luaPeekSHA = luaPeekSHA
 
-// doUpdateValue will execute setValue with a retry mecanism (optimistic locking) until store.MaxRetry is reached.
-func (store *Store) doUpdateValue(rtx *libredis.Tx, key string,
-	expiration time.Duration) (int64, time.Duration, error) {
-	for i := 0; i < store.MaxRetry; i++ {
-		count, ttl, err := updateValue(rtx, key, expiration)
-		if err == nil {
-			return count, ttl, nil
-		}
-
-		// If ttl is negative and there is an error, do not retry an update.
-		if ttl < 0 {
-			return 0, 0, err
-		}
-	}
-	return 0, 0, errors.New("retry limit exceeded")
-}
-
-// updateValue will try to increment the counter identified by given key.
-func updateValue(rtx *libredis.Tx, key string, expiration time.Duration) (int64, time.Duration, error) {
-	pipe := rtx.TxPipeline()
-	value := pipe.Incr(key)
-	expire := pipe.PTTL(key)
-
-	_, err := pipe.Exec()
-	if err != nil {
-		return 0, 0, err
-	}
-
-	count, err := value.Result()
-	if err != nil {
-		return 0, 0, err
-	}
-
-	ttl, err := expire.Result()
-	if err != nil {
-		return 0, 0, err
-	}
-
-	// If ttl is less than zero, we have to define key expiration.
-	// The PTTL command returns -2 if the key does not exist, and -1 if the key exists, but there is no expiry set.
-	// We shouldn't try to set an expiry on a key that doesn't exist.
-	if isExpirationRequired(ttl) {
-		expire := rtx.Expire(key, expiration)
-
-		ok, err := expire.Result()
-		if err != nil {
-			return count, ttl, err
-		}
-
-		if !ok {
-			return count, ttl, errors.New("cannot configure timeout on key")
-		}
-	}
-
-	return count, ttl, nil
-}
-
-// doResetValue will execute resetValue with a retry mecanism (optimistic locking) until store.MaxRetry is reached.
-func (store *Store) doResetValue(rtx *libredis.Tx, key string) error {
-	for i := 0; i < store.MaxRetry; i++ {
-		err := resetValue(rtx, key)
-		if err == nil {
-			return nil
-		}
-	}
-	return errors.New("retry limit exceeded")
-}
-
-// resetValue will try to reset the counter identified by given key.
-func resetValue(rtx *libredis.Tx, key string) error {
-	deletion := rtx.Del(key)
-
-	_, err := deletion.Result()
-	if err != nil {
-		return err
-	}
+	atomic.StoreUint32(&store.luaLoaded, 1)
 
 	return nil
 }
 
-// ping checks if redis is alive.
-func (store *Store) ping() (bool, error) {
-	cmd := store.client.Ping()
-
-	pong, err := cmd.Result()
-	if err != nil {
-		return false, errors.Wrap(err, "limiter: cannot ping redis server")
-	}
-
-	return (pong == "PONG"), nil
+// getLuaIncrSHA returns a "thread-safe" value for luaIncrSHA.
+func (store *Store) getLuaIncrSHA() string {
+	store.luaMutex.RLock()
+	defer store.luaMutex.RUnlock()
+	return store.luaIncrSHA
 }
 
-// isExpirationRequired returns if we should set an expiration on a key, using (error) result from PTTL command.
-// The error code is -2 if the key does not exist, and -1 if the key exists.
-// Usually, it should be returned in nanosecond, but some users have reported that it could be in millisecond as well.
-// Better safe than sorry: we handle both.
-func isExpirationRequired(ttl time.Duration) bool {
-	switch ttl {
-	case -1 * time.Nanosecond, -1 * time.Millisecond:
-		return true
-	default:
-		return false
+// getLuaPeekSHA returns a "thread-safe" value for luaPeekSHA.
+func (store *Store) getLuaPeekSHA() string {
+	store.luaMutex.RLock()
+	defer store.luaMutex.RUnlock()
+	return store.luaPeekSHA
+}
+
+// evalSHA eval the redis lua sha and load the scripts if missing.
+func (store *Store) evalSHA(ctx context.Context, getSha func() string,
+	keys []string, args ...interface{}) *libredis.Cmd {
+
+	cmd := store.client.EvalSha(ctx, getSha(), keys, args...)
+	err := cmd.Err()
+	if err == nil || !isLuaScriptGone(err) {
+		return cmd
 	}
+
+	err = store.reloadLuaScripts(ctx)
+	if err != nil {
+		cmd = libredis.NewCmd(ctx)
+		cmd.SetErr(err)
+		return cmd
+	}
+
+	return store.client.EvalSha(ctx, getSha(), keys, args...)
+}
+
+// isLuaScriptGone returns if the error is a missing lua script from redis server.
+func isLuaScriptGone(err error) bool {
+	return strings.HasPrefix(err.Error(), "NOSCRIPT")
+}
+
+// parseCountAndTTL parse count and ttl from lua script output.
+func parseCountAndTTL(cmd *libredis.Cmd) (int64, int64, error) {
+	result, err := cmd.Result()
+	if err != nil {
+		return 0, 0, errors.Wrap(err, "an error has occurred with redis command")
+	}
+
+	fields, ok := result.([]interface{})
+	if !ok || len(fields) != 2 {
+		return 0, 0, errors.New("two elements in result were expected")
+	}
+
+	count, ok1 := fields[0].(int64)
+	ttl, ok2 := fields[1].(int64)
+	if !ok1 || !ok2 {
+		return 0, 0, errors.New("type of the count and/or ttl should be number")
+	}
+
+	return count, ttl, nil
 }

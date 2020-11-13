@@ -1,4 +1,4 @@
-FROM golang:1.13-buster
+FROM golang:1-buster
 
 MAINTAINER thomas@leroux.io
 
@@ -19,7 +19,7 @@ ENV GOPATH /home/gopher/go
 ENV PATH $GOPATH/bin:$PATH
 USER gopher
 
-RUN go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+RUN GO111MODULE=on go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.27.0
 
 WORKDIR /media/ulule/limiter
 RUN go mod download

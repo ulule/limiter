@@ -21,6 +21,7 @@ type StoreOptions struct {
 	Prefix string
 
 	// MaxRetry is the maximum number of retry under race conditions.
+	// Deprecated: this option is no longer required since all operations are atomic now.
 	MaxRetry int
 
 	// CleanUpInterval is the interval for cleanup.

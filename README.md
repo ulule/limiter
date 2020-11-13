@@ -17,7 +17,7 @@ _Dead simple rate limit middleware for Go._
 Using [Go Modules](https://github.com/golang/go/wiki/Modules)
 
 ```bash
-$ go get github.com/ulule/limiter/v3@v3.5.0
+$ go get github.com/ulule/limiter/v3@v3.7.1
 ```
 
 ## Usage
@@ -79,7 +79,6 @@ import "github.com/ulule/limiter/v3/drivers/store/redis"
 
 store, err := redis.NewStoreWithOptions(pool, limiter.StoreOptions{
     Prefix:   "your_own_prefix",
-    MaxRetry: 4,
 })
 if err != nil {
     panic(err)
