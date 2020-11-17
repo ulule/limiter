@@ -2,11 +2,11 @@ package memory
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/common"
+	"github.com/ulule/limiter/v3/internal/bytebuffer"
 )
 
 // Store is the in-memory store.
@@ -35,33 +35,36 @@ func NewStoreWithOptions(options limiter.StoreOptions) limiter.Store {
 
 // Get returns the limit for given identifier.
 func (store *Store) Get(ctx context.Context, key string, rate limiter.Rate) (limiter.Context, error) {
-	key = fmt.Sprintf("%s:%s", store.Prefix, key)
-	now := time.Now()
+	buffer := bytebuffer.New()
+	defer buffer.Close()
+	buffer.Concat(store.Prefix, ":", key)
 
-	count, expiration := store.cache.Increment(key, 1, rate.Period)
+	count, expiration := store.cache.Increment(buffer.String(), 1, rate.Period)
 
-	lctx := common.GetContextFromState(now, rate, expiration, count)
+	lctx := common.GetContextFromState(time.Now(), rate, expiration, count)
 	return lctx, nil
 }
 
 // Peek returns the limit for given identifier, without modification on current values.
 func (store *Store) Peek(ctx context.Context, key string, rate limiter.Rate) (limiter.Context, error) {
-	key = fmt.Sprintf("%s:%s", store.Prefix, key)
-	now := time.Now()
+	buffer := bytebuffer.New()
+	defer buffer.Close()
+	buffer.Concat(store.Prefix, ":", key)
 
-	count, expiration := store.cache.Get(key, rate.Period)
+	count, expiration := store.cache.Get(buffer.String(), rate.Period)
 
-	lctx := common.GetContextFromState(now, rate, expiration, count)
+	lctx := common.GetContextFromState(time.Now(), rate, expiration, count)
 	return lctx, nil
 }
 
 // Reset returns the limit for given identifier.
 func (store *Store) Reset(ctx context.Context, key string, rate limiter.Rate) (limiter.Context, error) {
-	key = fmt.Sprintf("%s:%s", store.Prefix, key)
-	now := time.Now()
+	buffer := bytebuffer.New()
+	defer buffer.Close()
+	buffer.Concat(store.Prefix, ":", key)
 
-	count, expiration := store.cache.Reset(key, rate.Period)
+	count, expiration := store.cache.Reset(buffer.String(), rate.Period)
 
-	lctx := common.GetContextFromState(now, rate, expiration, count)
+	lctx := common.GetContextFromState(time.Now(), rate, expiration, count)
 	return lctx, nil
 }

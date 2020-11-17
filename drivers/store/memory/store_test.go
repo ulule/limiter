@@ -23,16 +23,16 @@ func TestMemoryStoreConcurrentAccess(t *testing.T) {
 	}))
 }
 
-func BenchmarkRedisStoreSequentialAccess(b *testing.B) {
+func BenchmarkMemoryStoreSequentialAccess(b *testing.B) {
 	tests.BenchmarkStoreSequentialAccess(b, memory.NewStoreWithOptions(limiter.StoreOptions{
 		Prefix:          "limiter:memory:sequential-benchmark",
-		CleanUpInterval: 1 * time.Second,
+		CleanUpInterval: 1 * time.Hour,
 	}))
 }
 
-func BenchmarkRedisStoreConcurrentAccess(b *testing.B) {
+func BenchmarkMemoryStoreConcurrentAccess(b *testing.B) {
 	tests.BenchmarkStoreConcurrentAccess(b, memory.NewStoreWithOptions(limiter.StoreOptions{
 		Prefix:          "limiter:memory:concurrent-benchmark",
-		CleanUpInterval: 1 * time.Second,
+		CleanUpInterval: 1 * time.Hour,
 	}))
 }

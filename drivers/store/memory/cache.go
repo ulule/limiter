@@ -172,18 +172,26 @@ func (cache *Cache) Range(handler func(key string, counter *Counter)) {
 func (cache *Cache) Increment(key string, value int64, duration time.Duration) (int64, time.Time) {
 	expiration := time.Now().Add(duration).UnixNano()
 
-	counter, loaded := cache.LoadOrStore(key, &Counter{
+	// If counter is in cache, try to load it first.
+	counter, loaded := cache.Load(key)
+	if loaded {
+		value, expiration = counter.Increment(value, expiration)
+		return value, time.Unix(0, expiration)
+	}
+
+	// If it's not in cache, try to atomically create it.
+	// We do that in two step to reduce memory allocation.
+	counter, loaded = cache.LoadOrStore(key, &Counter{
 		mutex:      sync.RWMutex{},
 		value:      value,
 		expiration: expiration,
 	})
-
-	if !loaded {
+	if loaded {
+		value, expiration = counter.Increment(value, expiration)
 		return value, time.Unix(0, expiration)
 	}
 
-	value, expiration = counter.Increment(value, expiration)
-	cache.Store(key, counter)
+	// Otherwise, it has been created, return given value.
 	return value, time.Unix(0, expiration)
 }
 
