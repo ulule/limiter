@@ -4,7 +4,7 @@
 package fasttime
 
 import (
-	_ "unsafe"
+	_ "unsafe" // import unsafe because we use go:linkname directive.
 )
 
 // Forked from https://github.com/sethvargo/go-limiter

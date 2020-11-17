@@ -10,7 +10,7 @@ type ByteBuffer struct {
 	blob []byte
 }
 
-// NewByteBuffer creates a new ByteBuffer instance.
+// New creates a new ByteBuffer instance.
 func New() *ByteBuffer {
 	entry := bufferPool.Get().(*ByteBuffer)
 	entry.blob = entry.blob[:0]
