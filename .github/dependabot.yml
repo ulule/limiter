@@ -6,4 +6,4 @@ updates:
     schedule:
       interval: "daily"
     commit-message:
-        prefix: "chore(gomod):"
+        prefix: "chore(go.mod):"
