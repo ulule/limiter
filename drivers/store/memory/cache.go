@@ -58,6 +58,20 @@ type Counter struct {
 	expiration int64
 }
 
+// Value returns the counter current value.
+func (counter *Counter) Value() int64 {
+	counter.mutex.RLock()
+	defer counter.mutex.RUnlock()
+	return counter.value
+}
+
+// Expiration returns the counter expiration.
+func (counter *Counter) Expiration() int64 {
+	counter.mutex.RLock()
+	defer counter.mutex.RUnlock()
+	return counter.expiration
+}
+
 // Expired returns true if the counter has expired.
 func (counter *Counter) Expired() bool {
 	counter.mutex.RLock()
