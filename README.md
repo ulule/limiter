@@ -179,8 +179,8 @@ Don't hesitate ;)
 [4]: https://github.com/gin-gonic/gin
 [5]: https://github.com/didip/tollbooth
 [6]: https://github.com/valyala/fasthttp
-[godoc-url]: https://pkg.go.dev/github.com/ulule/limiter
-[godoc-img]: https://pkg.go.dev/badge/github.com/ulule/limiter
+[godoc-url]: https://pkg.go.dev/github.com/ulule/limiter/v3
+[godoc-img]: https://pkg.go.dev/badge/github.com/ulule/limiter/v3
 [license-img]: https://img.shields.io/badge/license-MIT-blue.svg
 [goreport-url]: https://goreportcard.com/report/github.com/ulule/limiter
 [goreport-img]: https://goreportcard.com/badge/github.com/ulule/limiter
