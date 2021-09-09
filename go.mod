@@ -7,5 +7,5 @@ require (
 	github.com/go-redis/redis/v8 v8.11.1
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.0
-	github.com/valyala/fasthttp v1.28.0
+	github.com/valyala/fasthttp v1.30.0
 )
