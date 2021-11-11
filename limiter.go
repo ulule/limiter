@@ -58,3 +58,7 @@ func (limiter *Limiter) Peek(ctx context.Context, key string) (Context, error) {
 func (limiter *Limiter) Reset(ctx context.Context, key string) (Context, error) {
 	return limiter.Store.Reset(ctx, key, limiter.Rate)
 }
+
+func (limiter *Limiter) Inc(ctx context.Context, key string, count int64) (Context, error) {
+	return limiter.Store.Inc(ctx, key, count, limiter.Rate)
+}
