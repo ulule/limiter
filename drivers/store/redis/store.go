@@ -96,8 +96,8 @@ func NewStoreWithOptions(client Client, options limiter.StoreOptions) (limiter.S
 	return store, nil
 }
 
-// Inc increments the limit by given count & gives back the new limit for given identifier
-func (store *Store) Inc(ctx context.Context, key string, count int64, rate limiter.Rate) (limiter.Context, error) {
+// Increment increments the limit by given count & gives back the new limit for given identifier
+func (store *Store) Increment(ctx context.Context, key string, count int64, rate limiter.Rate) (limiter.Context, error) {
 	key = fmt.Sprintf("%s:%s", store.Prefix, key)
 	cmd := store.evalSHA(ctx, store.getLuaIncrSHA, []string{key}, count, rate.Period.Milliseconds())
 	return currentContext(cmd, rate)

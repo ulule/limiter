@@ -45,8 +45,8 @@ func (store *Store) Get(ctx context.Context, key string, rate limiter.Rate) (lim
 	return lctx, nil
 }
 
-// Inc increments the limit by given count & returns the new limit value for given identifier.
-func (store *Store) Inc(ctx context.Context, key string, count int64, rate limiter.Rate) (limiter.Context, error) {
+// Increment increments the limit by given count & returns the new limit value for given identifier.
+func (store *Store) Increment(ctx context.Context, key string, count int64, rate limiter.Rate) (limiter.Context, error) {
 	buffer := bytebuffer.New()
 	defer buffer.Close()
 	buffer.Concat(store.Prefix, ":", key)
