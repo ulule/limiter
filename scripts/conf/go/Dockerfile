@@ -19,7 +19,7 @@ ENV GOPATH /home/gopher/go
 ENV PATH $GOPATH/bin:$PATH
 USER gopher
 
-RUN GO111MODULE=on go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.27.0
+RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.43.0
 
 WORKDIR /media/ulule/limiter
 RUN go mod download
