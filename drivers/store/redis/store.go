@@ -96,22 +96,18 @@ func NewStoreWithOptions(client Client, options limiter.StoreOptions) (limiter.S
 	return store, nil
 }
 
+// Increment increments the limit by given count & gives back the new limit for given identifier
+func (store *Store) Increment(ctx context.Context, key string, count int64, rate limiter.Rate) (limiter.Context, error) {
+	key = fmt.Sprintf("%s:%s", store.Prefix, key)
+	cmd := store.evalSHA(ctx, store.getLuaIncrSHA, []string{key}, count, rate.Period.Milliseconds())
+	return currentContext(cmd, rate)
+}
+
 // Get returns the limit for given identifier.
 func (store *Store) Get(ctx context.Context, key string, rate limiter.Rate) (limiter.Context, error) {
 	key = fmt.Sprintf("%s:%s", store.Prefix, key)
 	cmd := store.evalSHA(ctx, store.getLuaIncrSHA, []string{key}, 1, rate.Period.Milliseconds())
-	count, ttl, err := parseCountAndTTL(cmd)
-	if err != nil {
-		return limiter.Context{}, err
-	}
-
-	now := time.Now()
-	expiration := now.Add(rate.Period)
-	if ttl > 0 {
-		expiration = now.Add(time.Duration(ttl) * time.Millisecond)
-	}
-
-	return common.GetContextFromState(now, rate, expiration, count), nil
+	return currentContext(cmd, rate)
 }
 
 // Peek returns the limit for given identifier, without modification on current values.
@@ -252,4 +248,19 @@ func parseCountAndTTL(cmd *libredis.Cmd) (int64, int64, error) {
 	}
 
 	return count, ttl, nil
+}
+
+func currentContext(cmd *libredis.Cmd, rate limiter.Rate) (limiter.Context, error) {
+	count, ttl, err := parseCountAndTTL(cmd)
+	if err != nil {
+		return limiter.Context{}, err
+	}
+
+	now := time.Now()
+	expiration := now.Add(rate.Period)
+	if ttl > 0 {
+		expiration = now.Add(time.Duration(ttl) * time.Millisecond)
+	}
+
+	return common.GetContextFromState(now, rate, expiration, count), nil
 }

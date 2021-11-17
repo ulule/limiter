@@ -13,6 +13,8 @@ type Store interface {
 	Peek(ctx context.Context, key string, rate Rate) (Context, error)
 	// Reset resets the limit to zero for given identifier.
 	Reset(ctx context.Context, key string, rate Rate) (Context, error)
+	// Increment increments the limit by given count & gives back the new limit for given identifier
+	Increment(ctx context.Context, key string, count int64, rate Rate) (Context, error)
 }
 
 // StoreOptions are options for store.

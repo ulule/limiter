@@ -45,6 +45,18 @@ func (store *Store) Get(ctx context.Context, key string, rate limiter.Rate) (lim
 	return lctx, nil
 }
 
+// Increment increments the limit by given count & returns the new limit value for given identifier.
+func (store *Store) Increment(ctx context.Context, key string, count int64, rate limiter.Rate) (limiter.Context, error) {
+	buffer := bytebuffer.New()
+	defer buffer.Close()
+	buffer.Concat(store.Prefix, ":", key)
+
+	newCount, expiration := store.cache.Increment(buffer.String(), count, rate.Period)
+
+	lctx := common.GetContextFromState(time.Now(), rate, expiration, newCount)
+	return lctx, nil
+}
+
 // Peek returns the limit for given identifier, without modification on current values.
 func (store *Store) Peek(ctx context.Context, key string, rate limiter.Rate) (limiter.Context, error) {
 	buffer := bytebuffer.New()

@@ -58,3 +58,8 @@ func (limiter *Limiter) Peek(ctx context.Context, key string) (Context, error) {
 func (limiter *Limiter) Reset(ctx context.Context, key string) (Context, error) {
 	return limiter.Store.Reset(ctx, key, limiter.Rate)
 }
+
+// Increment increments the limit by given count & gives back the new limit for given identifier
+func (limiter *Limiter) Increment(ctx context.Context, key string, count int64) (Context, error) {
+	return limiter.Store.Increment(ctx, key, count, limiter.Rate)
+}
