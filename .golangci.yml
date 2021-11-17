@@ -34,7 +34,7 @@ linters-settings:
   misspell:
     locale: US
   lll:
-    line-length: 120
+    line-length: 140
   unused:
     check-exported: false
   unparam:
@@ -54,8 +54,6 @@ linters:
     - ineffassign
     - deadcode
     - typecheck
-    - golint
-    - interfacer
     - unconvert
     - gocyclo
     - gofmt
