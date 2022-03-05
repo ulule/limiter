@@ -12,6 +12,7 @@ type Middleware struct {
 	Limiter        *limiter.Limiter
 	OnError        ErrorHandler
 	OnLimitReached LimitReachedHandler
+	KeyGetter      KeyGetter
 	ExcludedKey    func(string) bool
 }
 
@@ -21,6 +22,7 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) *Middleware {
 		Limiter:        limiter,
 		OnError:        DefaultErrorHandler,
 		OnLimitReached: DefaultLimitReachedHandler,
+		KeyGetter:      DefaultKeyGetter(limiter),
 		ExcludedKey:    nil,
 	}
 
@@ -34,7 +36,7 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) *Middleware {
 // Handler handles a HTTP request.
 func (middleware *Middleware) Handler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		key := middleware.Limiter.GetIPKey(r)
+		key := middleware.KeyGetter(r)
 		if middleware.ExcludedKey != nil && middleware.ExcludedKey(key) {
 			h.ServeHTTP(w, r)
 			return
