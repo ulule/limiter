@@ -2,6 +2,8 @@ package stdlib
 
 import (
 	"net/http"
+
+	"github.com/ulule/limiter/v3"
 )
 
 // Option is used to define Middleware configuration.
@@ -43,6 +45,24 @@ func WithLimitReachedHandler(handler LimitReachedHandler) Option {
 // DefaultLimitReachedHandler is the default LimitReachedHandler used by a new Middleware.
 func DefaultLimitReachedHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Limit exceeded", http.StatusTooManyRequests)
+}
+
+// KeyGetter will define the rate limiter key given the gin Context.
+type KeyGetter func(r *http.Request) string
+
+// WithKeyGetter will configure the Middleware to use the given KeyGetter.
+func WithKeyGetter(handler KeyGetter) Option {
+	return option(func(middleware *Middleware) {
+		middleware.KeyGetter = handler
+	})
+}
+
+// DefaultKeyGetter is the default KeyGetter used by a new Middleware.
+// It returns the Client IP address.
+func DefaultKeyGetter(limiter *limiter.Limiter) func(r *http.Request) string {
+	return func(r *http.Request) string {
+		return limiter.GetIPKey(r)
+	}
 }
 
 // WithExcludedKey will configure the Middleware to ignore key(s) using the given function.
