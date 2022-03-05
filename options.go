@@ -41,8 +41,21 @@ func WithIPv6Mask(mask net.IPMask) Option {
 }
 
 // WithTrustForwardHeader will configure the limiter to trust X-Real-IP and X-Forwarded-For headers.
+// Please be advised that using this option could be insecure (ie: spoofed) if your reverse
+// proxy is not configured properly to forward a trustworthy client IP.
+// Please read the section "Limiter behind a reverse proxy" in the README for further information.
 func WithTrustForwardHeader(enable bool) Option {
 	return func(o *Options) {
 		o.TrustForwardHeader = enable
+	}
+}
+
+// WithClientIPHeader will configure the limiter to use a custom header to obtain user IP.
+// Please be advised that using this option could be insecure (ie: spoofed) if your reverse
+// proxy is not configured properly to forward a trustworthy client IP.
+// Please read the section "Limiter behind a reverse proxy" in the README for further information.
+func WithClientIPHeader(header string) Option {
+	return func(o *Options) {
+		o.ClientIPHeader = header
 	}
 }
