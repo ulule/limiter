@@ -125,6 +125,73 @@ You will find two stores:
 
 When the limit is reached, a `429` HTTP status code is sent.
 
+## Limiter behind a reverse proxy
+
+### Introduction
+
+If your limiter is behind a reverse proxy, it could be difficult to obtain the "real" client IP.
+
+Some reverse proxies, like AWS ALB, lets all header values through that it doesn't set itself.
+Like for example, `True-Client-IP` and `X-Real-IP`.
+Similarly, `X-Forwarded-For` is a list of comma-separated IPs that gets appended to by each traversed proxy.
+The idea is that the first IP _(added by the first proxy)_ is the true client IP. Each subsequent IP is another proxy along the path.
+
+An attacker can spoof either of those headers, which could be reported as a client IP.
+
+By default, limiter doesn't trust any of those headers: you have to explicitly enable them in order to use them.
+If you enable them, **you must always be aware** that any header added by any _(reverse)_ proxy not controlled
+by you **are completely unreliable.**
+
+### X-Forwarded-For
+
+For example, if you make this request to your load balancer:
+```bash
+curl -X POST https://example.com/login -H "X-Forwarded-For: 1.2.3.4, 11.22.33.44"
+```
+
+And your server behind the load balancer obtain this:
+```
+X-Forwarded-For: 1.2.3.4, 11.22.33.44, <actual client IP>
+```
+
+That's mean you can't use `X-Forwarded-For` header, because it's **unreliable** and **untrustworthy**.
+So keep `TrustForwardHeader` disabled in your limiter option.
+
+However, if you have configured your reverse proxy to always remove/overwrite `X-Forwarded-For` and/or `X-Real-IP` headers
+so that if you execute this _(same)_ request:
+```bash
+curl -X POST https://example.com/login -H "X-Forwarded-For: 1.2.3.4, 11.22.33.44"
+```
+
+And your server behind the load balancer obtain this:
+```
+X-Forwarded-For: <actual client IP>
+```
+
+Then, you can enable `TrustForwardHeader` in your limiter option.
+
+### Custom header
+
+Many CDN and Cloud providers add a custom header to define the client IP. Like for example, this non exhaustive list:
+
+* `Fastly-Client-IP` from Fastly
+* `CF-Connecting-IP` from Cloudflare
+* `X-Azure-ClientIP` from Azure
+
+You can use these headers using `ClientIPHeader` in your limiter option.
+
+### None of the above
+
+If none of the above solution are working, please use a custom `KeyGetter` in your middleware.
+
+You can use this excellent article to help you define the best strategy depending on your network topology and your security need:
+https://adam-p.ca/blog/2022/03/x-forwarded-for/
+
+If you have any idea/suggestions on how we could simplify this steps, don't hesitate to raise an issue.
+We would like some feedback on how we could implement this steps in the Limiter API.
+
+Thank you.
+
 ## Why Yet Another Package
 
 You could ask us: why yet another rate limit package?
