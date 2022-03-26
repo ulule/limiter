@@ -17,26 +17,24 @@ import (
 
 const (
 	luaIncrScript = `
-local key = KEYS[1]
 local count = tonumber(ARGV[1])
 local ttl = tonumber(ARGV[2])
-local ret = redis.call("incrby", key, ARGV[1])
+local ret = redis.call("incrby", KEYS[1], ARGV[1])
 if ret == count then
 	if ttl > 0 then
-		redis.call("pexpire", key, ARGV[2])
+		redis.call("pexpire", KEYS[1], ARGV[2])
 	end
 	return {ret, ttl}
 end
-ttl = redis.call("pttl", key)
+ttl = redis.call("pttl", KEYS[1])
 return {ret, ttl}
 `
 	luaPeekScript = `
-local key = KEYS[1]
-local v = redis.call("get", key)
+local v = redis.call("get", KEYS[1])
 if v == false then
 	return {0, 0}
 end
-local ttl = redis.call("pttl", key)
+local ttl = redis.call("pttl", KEYS[1])
 return {tonumber(v), ttl}
 `
 )
