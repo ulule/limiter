@@ -6,7 +6,7 @@ require (
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.0
 	github.com/valyala/fasthttp v1.34.0
 )
 
@@ -33,5 +33,5 @@ require (
 	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
