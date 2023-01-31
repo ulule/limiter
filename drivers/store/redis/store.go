@@ -8,8 +8,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	libredis "github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
+	libredis "github.com/redis/go-redis/v9"
 
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/common"
