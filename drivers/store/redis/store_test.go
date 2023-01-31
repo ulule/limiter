@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	libredis "github.com/go-redis/redis/v8"
+	libredis "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ulule/limiter/v3"
