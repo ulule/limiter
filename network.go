@@ -1,6 +1,9 @@
 package limiter
 
 import (
+	"fmt"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/pkg/errors"
 	"net"
 	"net/http"
 	"strings"
@@ -21,6 +24,12 @@ var (
 // Please read the section "Limiter behind a reverse proxy" in the README for further information.
 func (limiter *Limiter) GetIP(r *http.Request) net.IP {
 	return GetIP(r, limiter.Options)
+}
+
+// GetJWTSub returns sub from request JWT.
+// it will lookup sub in jwt token.
+func (limiter *Limiter) GetJWTSub(r *http.Request) string {
+	return GetSub(r)
 }
 
 // GetIPWithMask returns IP address from request by applying a mask.
@@ -79,6 +88,16 @@ func GetIP(r *http.Request, options ...Options) net.IP {
 	return net.ParseIP(host)
 }
 
+// GetSub returns sub from request JWT.
+func GetSub(r *http.Request) string {
+	token := getAuthorizationToken(r)
+	sub, err := extractSubFromJWT(token)
+	if err != nil {
+		return ""
+	}
+	return sub
+}
+
 // GetIPWithMask returns IP address from request by applying a mask.
 // If options is defined and either TrustForwardHeader is true or ClientIPHeader is defined,
 // it will lookup IP in HTTP headers.
@@ -134,4 +153,34 @@ func getIPFromHeader(r *http.Request, name string) net.IP {
 	}
 
 	return nil
+}
+
+func extractSubFromJWT(jwtString string) (string, error) {
+	token, _, err := new(jwt.Parser).ParseUnverified(jwtString, jwt.MapClaims{})
+	if err != nil {
+		fmt.Printf("Error %s", err)
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		// obtains claims
+		return "", errors.New("")
+	}
+
+	return fmt.Sprint(claims["sub"]), nil
+}
+
+func getAuthorizationToken(r *http.Request) string {
+	headerToken := r.Header.Get("Authorization")
+	if headerToken == "" {
+		return ""
+	}
+
+	// Verify the token format (Bearer <token>)
+	const bearer = "Bearer "
+	if len(headerToken) <= len(bearer) || headerToken[:len(bearer)] != bearer {
+		return ""
+	}
+	tokenString := headerToken[len(bearer):]
+
+	return tokenString
 }
