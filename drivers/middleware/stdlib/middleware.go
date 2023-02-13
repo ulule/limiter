@@ -33,6 +33,23 @@ func NewMiddleware(limiter *limiter.Limiter, options ...Option) *Middleware {
 	return middleware
 }
 
+// NewJWTMiddleware return a new instance of a JWT token middleware.
+func NewJWTMiddleware(limiter *limiter.Limiter, options ...Option) *Middleware {
+	middleware := &Middleware{
+		Limiter:        limiter,
+		OnError:        DefaultErrorHandler,
+		OnLimitReached: DefaultLimitReachedHandler,
+		KeyGetter:      JWTKeyGetter(limiter),
+		ExcludedKey:    nil,
+	}
+
+	for _, option := range options {
+		option.apply(middleware)
+	}
+
+	return middleware
+}
+
 // Handler handles a HTTP request.
 func (middleware *Middleware) Handler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
