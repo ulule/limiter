@@ -71,3 +71,11 @@ func WithExcludedKey(handler func(string) bool) Option {
 		middleware.ExcludedKey = handler
 	})
 }
+
+// JWTKeyGetter is the default KeyGetter used by a new Middleware.
+// It returns the Client JWT token.
+func JWTKeyGetter(limiter *limiter.Limiter) func(r *http.Request) string {
+	return func(r *http.Request) string {
+		return limiter.GetJWTSub(r)
+	}
+}
