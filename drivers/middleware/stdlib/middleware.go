@@ -53,6 +53,12 @@ func NewJWTMiddleware(limiter *limiter.Limiter, options ...Option) *Middleware {
 // Handler handles a HTTP request.
 func (middleware *Middleware) Handler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := middleware.Limiter.ErrValidation
+		if err != nil {
+			middleware.OnError(w, r, err)
+			return
+		}
+
 		key := middleware.KeyGetter(r)
 		if middleware.ExcludedKey != nil && middleware.ExcludedKey(key) {
 			h.ServeHTTP(w, r)
