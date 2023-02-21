@@ -3,7 +3,6 @@ package limiter
 import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/pkg/errors"
 	"net"
 	"net/http"
 	"strings"
@@ -29,7 +28,9 @@ func (limiter *Limiter) GetIP(r *http.Request) net.IP {
 // GetJWTSub returns sub from request JWT.
 // it will lookup sub in jwt token.
 func (limiter *Limiter) GetJWTSub(r *http.Request) string {
-	return GetSub(r)
+	sub, err := GetSub(r, limiter.Options.JWTSecret)
+	limiter.ErrValidation = err
+	return sub
 }
 
 // GetIPWithMask returns IP address from request by applying a mask.
@@ -89,13 +90,10 @@ func GetIP(r *http.Request, options ...Options) net.IP {
 }
 
 // GetSub returns sub from request JWT.
-func GetSub(r *http.Request) string {
+func GetSub(r *http.Request, secret string) (string, error) {
 	token := getAuthorizationToken(r)
-	sub, err := extractSubFromJWT(token)
-	if err != nil {
-		return ""
-	}
-	return sub
+	sub, err := extractSubFromJWT(token, secret)
+	return sub, err
 }
 
 // GetIPWithMask returns IP address from request by applying a mask.
@@ -155,18 +153,19 @@ func getIPFromHeader(r *http.Request, name string) net.IP {
 	return nil
 }
 
-func extractSubFromJWT(jwtString string) (string, error) {
-	token, _, err := new(jwt.Parser).ParseUnverified(jwtString, jwt.MapClaims{})
+func extractSubFromJWT(jwtString, secret string) (string, error) {
+	claims := &jwt.StandardClaims{}
+	token, err := jwt.ParseWithClaims(jwtString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secret), nil
+	})
 	if err != nil {
-		fmt.Printf("Error %s", err)
+		return "", err
 	}
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		// obtains claims
-		return "", errors.New("")
+	if !token.Valid {
+		return "", http.ErrLineTooLong
 	}
-
-	return fmt.Sprint(claims["sub"]), nil
+	fmt.Println(claims.Subject)
+	return fmt.Sprint([]byte(claims.Subject)), nil
 }
 
 func getAuthorizationToken(r *http.Request) string {
