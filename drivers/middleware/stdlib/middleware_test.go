@@ -94,7 +94,7 @@ func TestJWTMiddleware(t *testing.T) {
 	is := require.New(t)
 
 	request, err := http.NewRequest("GET", "/", nil)
-	request.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqaWdzYXczNzMiLCJuYW1lIjoibW9oYW1tYWQiLCJpYXQiOjE1MTYyMzkwMjJ9.1KVKnIQRAMHj0iw6RvBBypZ1maoOG9wxCuwx_3jb7wQ")
+	request.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2hhbW1hZCIsImlhdCI6MTUxNjIzOTAyMn0.NZb8JLJE_j2QycNwy3W-2qOQ8JmHwwfaEHj1vd50Ep0")
 	is.NoError(err)
 	is.NotNil(request)
 
@@ -112,7 +112,7 @@ func TestJWTMiddleware(t *testing.T) {
 	is.NoError(err)
 	is.NotZero(rate)
 
-	middleware := stdlib.NewJWTMiddleware(limiter.New(store, rate)).Handler(handler)
+	middleware := stdlib.NewJWTMiddleware(limiter.New(store, rate, limiter.WithJWTSecret("javad"))).Handler(handler)
 	is.NotZero(middleware)
 
 	success := int64(10)
@@ -134,14 +134,12 @@ func TestJWTMiddleware(t *testing.T) {
 		}
 	}
 
-	//
 	// Concurrent
-	//
 
 	store = memory.NewStore()
 	is.NotZero(store)
 
-	middleware = stdlib.NewJWTMiddleware(limiter.New(store, rate)).Handler(handler)
+	middleware = stdlib.NewJWTMiddleware(limiter.New(store, rate, limiter.WithJWTSecret("javad"))).Handler(handler)
 	is.NotZero(middleware)
 
 	wg := &sync.WaitGroup{}
