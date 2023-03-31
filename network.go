@@ -3,6 +3,7 @@ package limiter
 import (
 	"fmt"
 	"github.com/golang-jwt/jwt"
+	"github.com/pkg/errors"
 	"net"
 	"net/http"
 	"strings"
@@ -91,9 +92,11 @@ func GetIP(r *http.Request, options ...Options) net.IP {
 
 // GetJWTSub returns sub from request JWT.
 func GetJWTSub(r *http.Request, secret string) (string, error) {
-	token := getAuthorizationToken(r)
-	sub, err := extractSubFromJWT(token, secret)
-	return sub, err
+	if token, valid := getAuthorizationToken(r); valid {
+		sub, err := extractSubFromJWT(token, secret)
+		return sub, err
+	}
+	return "", errors.New("invalid token")
 }
 
 // GetIPWithMask returns IP address from request by applying a mask.
@@ -168,19 +171,19 @@ func extractSubFromJWT(jwtString string, secret string) (string, error) {
 	return fmt.Sprint([]byte(claims.Subject)), nil
 }
 
-func getAuthorizationToken(r *http.Request) string {
+func getAuthorizationToken(r *http.Request) (string, bool) {
 	const bearer = "bearer "
 	headerToken := r.Header.Get("Authorization")
 	if headerToken == "" {
-		return ""
+		return "", false
 	}
 
 	// Verify the token format (Bearer <token>)
 	lowerToken := strings.ToLower(headerToken[:len(bearer)])
 	if len(headerToken) <= len(bearer) || lowerToken != bearer {
-		return ""
+		return "", false
 	}
 	tokenString := headerToken[len(bearer):]
 
-	return tokenString
+	return tokenString, true
 }
