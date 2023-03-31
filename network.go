@@ -14,6 +14,8 @@ var (
 	DefaultIPv4Mask = net.CIDRMask(32, 32)
 	// DefaultIPv6Mask defines the default IPv6 mask used to obtain user IP.
 	DefaultIPv6Mask = net.CIDRMask(128, 128)
+	// ErrInvalidJWT Define invalid JWT error
+	ErrInvalidJWT = errors.New("invalid JWT token")
 )
 
 // GetIP returns IP address from request.
@@ -96,7 +98,7 @@ func GetJWTSub(r *http.Request, secret string) (string, error) {
 		sub, err := extractSubFromJWT(token, secret)
 		return sub, err
 	}
-	return "", errors.New("invalid token")
+	return "", ErrInvalidJWT
 }
 
 // GetIPWithMask returns IP address from request by applying a mask.
@@ -165,7 +167,7 @@ func extractSubFromJWT(jwtString string, secret string) (string, error) {
 		return "", err
 	}
 	if !token.Valid {
-		return "", http.ErrLineTooLong
+		return "", ErrInvalidJWT
 	}
 	return fmt.Sprint([]byte(claims.Subject)), nil
 }
