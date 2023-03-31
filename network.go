@@ -153,7 +153,7 @@ func getIPFromHeader(r *http.Request, name string) net.IP {
 	return nil
 }
 
-func extractSubFromJWT(jwtString, secret string) (string, error) {
+func extractSubFromJWT(jwtString string, secret string) (string, error) {
 	claims := &jwt.StandardClaims{}
 	token, err := jwt.ParseWithClaims(jwtString, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
