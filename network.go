@@ -167,7 +167,6 @@ func extractSubFromJWT(jwtString string, secret string) (string, error) {
 	if !token.Valid {
 		return "", http.ErrLineTooLong
 	}
-	fmt.Println(claims.Subject)
 	return fmt.Sprint([]byte(claims.Subject)), nil
 }
 
