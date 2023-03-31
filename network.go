@@ -169,14 +169,15 @@ func extractSubFromJWT(jwtString string, secret string) (string, error) {
 }
 
 func getAuthorizationToken(r *http.Request) string {
+	const bearer = "bearer "
 	headerToken := r.Header.Get("Authorization")
 	if headerToken == "" {
 		return ""
 	}
 
 	// Verify the token format (Bearer <token>)
-	const bearer = "Bearer "
-	if len(headerToken) <= len(bearer) || headerToken[:len(bearer)] != bearer {
+	lowerToken := strings.ToLower(headerToken[:len(bearer)])
+	if len(headerToken) <= len(bearer) || lowerToken != bearer {
 		return ""
 	}
 	tokenString := headerToken[len(bearer):]
