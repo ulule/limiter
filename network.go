@@ -28,7 +28,7 @@ func (limiter *Limiter) GetIP(r *http.Request) net.IP {
 // GetJWTSub returns sub from request JWT.
 // it will lookup sub in jwt token.
 func (limiter *Limiter) GetJWTSub(r *http.Request) string {
-	sub, err := GetSub(r, limiter.Options.JWTSecret)
+	sub, err := GetJWTSub(r, limiter.Options.JWTSecret)
 	limiter.ErrValidation = err
 	return sub
 }
@@ -89,8 +89,8 @@ func GetIP(r *http.Request, options ...Options) net.IP {
 	return net.ParseIP(host)
 }
 
-// GetSub returns sub from request JWT.
-func GetSub(r *http.Request, secret string) (string, error) {
+// GetJWTSub returns sub from request JWT.
+func GetJWTSub(r *http.Request, secret string) (string, error) {
 	token := getAuthorizationToken(r)
 	sub, err := extractSubFromJWT(token, secret)
 	return sub, err
