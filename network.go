@@ -15,7 +15,7 @@ var (
 	// DefaultIPv6Mask defines the default IPv6 mask used to obtain user IP.
 	DefaultIPv6Mask = net.CIDRMask(128, 128)
 	// ErrInvalidJWT Define invalid JWT error
-	ErrInvalidJWT = errors.New("invalid JWT token")
+	ErrInvalidJWT = fmt.Errorf("invalid JWT token")
 )
 
 // GetIP returns IP address from request.
