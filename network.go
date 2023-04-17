@@ -1,6 +1,9 @@
 package limiter
 
 import (
+	"fmt"
+	"github.com/golang-jwt/jwt"
+	"github.com/pkg/errors"
 	"net"
 	"net/http"
 	"strings"
@@ -11,6 +14,8 @@ var (
 	DefaultIPv4Mask = net.CIDRMask(32, 32)
 	// DefaultIPv6Mask defines the default IPv6 mask used to obtain user IP.
 	DefaultIPv6Mask = net.CIDRMask(128, 128)
+	// ErrInvalidJWT defines an error returned when JWT is invalid.
+	ErrInvalidJWT = fmt.Errorf("invalid JWT token")
 )
 
 // GetIP returns IP address from request.
@@ -21,6 +26,14 @@ var (
 // Please read the section "Limiter behind a reverse proxy" in the README for further information.
 func (limiter *Limiter) GetIP(r *http.Request) net.IP {
 	return GetIP(r, limiter.Options)
+}
+
+// GetJWTSub returns sub from request JWT.
+// it will lookup sub in jwt token.
+func (limiter *Limiter) GetJWTSub(r *http.Request) string {
+	sub, err := GetJWTSub(r, limiter.Options.JWTSecret)
+	limiter.ErrValidation = err
+	return sub
 }
 
 // GetIPWithMask returns IP address from request by applying a mask.
@@ -79,6 +92,15 @@ func GetIP(r *http.Request, options ...Options) net.IP {
 	return net.ParseIP(host)
 }
 
+// GetJWTSub returns sub from request JWT.
+func GetJWTSub(r *http.Request, secret string) (string, error) {
+	if token, valid := getAuthorizationToken(r); valid {
+		sub, err := extractSubFromJWT(token, secret)
+		return sub, err
+	}
+	return "", ErrInvalidJWT
+}
+
 // GetIPWithMask returns IP address from request by applying a mask.
 // If options is defined and either TrustForwardHeader is true or ClientIPHeader is defined,
 // it will lookup IP in HTTP headers.
@@ -134,4 +156,35 @@ func getIPFromHeader(r *http.Request, name string) net.IP {
 	}
 
 	return nil
+}
+
+func extractSubFromJWT(jwtString string, secret string) (string, error) {
+	claims := &jwt.StandardClaims{}
+	token, err := jwt.ParseWithClaims(jwtString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secret), nil
+	})
+	if err != nil {
+		return "", err
+	}
+	if !token.Valid {
+		return "", ErrInvalidJWT
+	}
+	return fmt.Sprint([]byte(claims.Subject)), nil
+}
+
+func getAuthorizationToken(r *http.Request) (string, bool) {
+	bearer := "bearer "
+	headerToken := r.Header.Get("Authorization")
+	if headerToken == "" {
+		return "", false
+	}
+
+	// Verify the token format (Bearer <token>)
+	lowerToken := strings.ToLower(headerToken[:len(bearer)])
+	if len(headerToken) <= len(bearer) || lowerToken != bearer {
+		return "", false
+	}
+	tokenString := headerToken[len(bearer):]
+
+	return tokenString, true
 }

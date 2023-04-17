@@ -22,9 +22,10 @@ type Context struct {
 
 // Limiter is the limiter instance.
 type Limiter struct {
-	Store   Store
-	Rate    Rate
-	Options Options
+	Store         Store
+	Rate          Rate
+	Options       Options
+	ErrValidation error
 }
 
 // New returns an instance of Limiter.

@@ -24,12 +24,20 @@ type Options struct {
 	// proxy is not configured properly to forward a trustworthy client IP.
 	// Please read the section "Limiter behind a reverse proxy" in the README for further information.
 	ClientIPHeader string
+	JWTSecret      string
 }
 
 // WithIPv4Mask will configure the limiter to use given mask for IPv4 address.
 func WithIPv4Mask(mask net.IPMask) Option {
 	return func(o *Options) {
 		o.IPv4Mask = mask
+	}
+}
+
+// WithJWTSecret will configure the limiter to use given mask with JWT secret.
+func WithJWTSecret(secret string) Option {
+	return func(o *Options) {
+		o.JWTSecret = secret
 	}
 }
 
