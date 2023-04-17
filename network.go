@@ -14,7 +14,7 @@ var (
 	DefaultIPv4Mask = net.CIDRMask(32, 32)
 	// DefaultIPv6Mask defines the default IPv6 mask used to obtain user IP.
 	DefaultIPv6Mask = net.CIDRMask(128, 128)
-	// ErrInvalidJWT Define invalid JWT error
+	// ErrInvalidJWT defines an error returned when JWT is invalid.
 	ErrInvalidJWT = fmt.Errorf("invalid JWT token")
 )
 
