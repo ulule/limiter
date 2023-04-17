@@ -173,7 +173,7 @@ func extractSubFromJWT(jwtString string, secret string) (string, error) {
 }
 
 func getAuthorizationToken(r *http.Request) (string, bool) {
-	const bearer = "bearer "
+	bearer := "bearer "
 	headerToken := r.Header.Get("Authorization")
 	if headerToken == "" {
 		return "", false
