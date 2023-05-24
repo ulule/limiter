@@ -2,7 +2,6 @@ package redis
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -98,22 +97,19 @@ func NewStoreWithOptions(client Client, options limiter.StoreOptions) (limiter.S
 
 // Increment increments the limit by given count & gives back the new limit for given identifier
 func (store *Store) Increment(ctx context.Context, key string, count int64, rate limiter.Rate) (limiter.Context, error) {
-	key = fmt.Sprintf("%s:%s", store.Prefix, key)
-	cmd := store.evalSHA(ctx, store.getLuaIncrSHA, []string{key}, count, rate.Period.Milliseconds())
+	cmd := store.evalSHA(ctx, store.getLuaIncrSHA, []string{store.getCacheKey(key)}, count, rate.Period.Milliseconds())
 	return currentContext(cmd, rate)
 }
 
 // Get returns the limit for given identifier.
 func (store *Store) Get(ctx context.Context, key string, rate limiter.Rate) (limiter.Context, error) {
-	key = fmt.Sprintf("%s:%s", store.Prefix, key)
-	cmd := store.evalSHA(ctx, store.getLuaIncrSHA, []string{key}, 1, rate.Period.Milliseconds())
+	cmd := store.evalSHA(ctx, store.getLuaIncrSHA, []string{store.getCacheKey(key)}, 1, rate.Period.Milliseconds())
 	return currentContext(cmd, rate)
 }
 
 // Peek returns the limit for given identifier, without modification on current values.
 func (store *Store) Peek(ctx context.Context, key string, rate limiter.Rate) (limiter.Context, error) {
-	key = fmt.Sprintf("%s:%s", store.Prefix, key)
-	cmd := store.evalSHA(ctx, store.getLuaPeekSHA, []string{key})
+	cmd := store.evalSHA(ctx, store.getLuaPeekSHA, []string{store.getCacheKey(key)})
 	count, ttl, err := parseCountAndTTL(cmd)
 	if err != nil {
 		return limiter.Context{}, err
@@ -130,8 +126,7 @@ func (store *Store) Peek(ctx context.Context, key string, rate limiter.Rate) (li
 
 // Reset returns the limit for given identifier which is set to zero.
 func (store *Store) Reset(ctx context.Context, key string, rate limiter.Rate) (limiter.Context, error) {
-	key = fmt.Sprintf("%s:%s", store.Prefix, key)
-	_, err := store.client.Del(ctx, key).Result()
+	_, err := store.client.Del(ctx, store.getCacheKey(key)).Result()
 	if err != nil {
 		return limiter.Context{}, err
 	}
@@ -141,6 +136,15 @@ func (store *Store) Reset(ctx context.Context, key string, rate limiter.Rate) (l
 	expiration := now.Add(rate.Period)
 
 	return common.GetContextFromState(now, rate, expiration, count), nil
+}
+
+// getCacheKey returns the full path for an identifier.
+func (store *Store) getCacheKey(key string) string {
+	buffer := strings.Builder{}
+	buffer.WriteString(store.Prefix)
+	buffer.WriteString(":")
+	buffer.WriteString(key)
+	return buffer.String()
 }
 
 // preloadLuaScripts preloads the "incr" and "peek" lua scripts.
