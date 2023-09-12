@@ -22,9 +22,10 @@ type Context struct {
 
 // Limiter is the limiter instance.
 type Limiter struct {
-	Store   Store
-	Rate    Rate
-	Options Options
+	Store    Store
+	Rate     Rate
+	Options  Options
+	SkipList SkipList
 }
 
 // New returns an instance of Limiter.
@@ -37,15 +38,22 @@ func New(store Store, rate Rate, options ...Option) *Limiter {
 	for _, o := range options {
 		o(&opt)
 	}
+	whiteList := SkipList{
+		Keys: opt.SkipList,
+	}
 	return &Limiter{
-		Store:   store,
-		Rate:    rate,
-		Options: opt,
+		Store:    store,
+		Rate:     rate,
+		Options:  opt,
+		SkipList: whiteList,
 	}
 }
 
 // Get returns the limit for given identifier.
 func (limiter *Limiter) Get(ctx context.Context, key string) (Context, error) {
+	if limiter.SkipList.HasKey(key) {
+		return Context{}, nil
+	}
 	return limiter.Store.Get(ctx, key, limiter.Rate)
 }
 
