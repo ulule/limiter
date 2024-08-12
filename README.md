@@ -203,7 +203,7 @@ We tried a lot of alternatives:
 1. [Throttled][1]. This package uses the generic cell-rate algorithm. To cite the
    documentation: _"The algorithm has been slightly modified from its usual form to
    support limiting with an additional quantity parameter, such as for limiting the
-   number of bytes uploaded"_. It is brillant in term of algorithm but
+   number of bytes uploaded"_. It is brilliant in term of algorithm but
    documentation is quite unclear at the moment, we don't need _burst_ feature for
    now, impossible to get a correct `After-Retry` (when limit exceeds, we can still
    make a few requests, because of the max burst) and it only supports `http.Handler`
