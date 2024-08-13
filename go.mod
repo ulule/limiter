@@ -7,7 +7,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.0.5
 	github.com/stretchr/testify v1.8.4
-	github.com/valyala/fasthttp v1.47.0
+	github.com/valyala/fasthttp v1.50.0
 )
 
 require (
