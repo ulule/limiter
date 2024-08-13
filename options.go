@@ -24,6 +24,9 @@ type Options struct {
 	// proxy is not configured properly to forward a trustworthy client IP.
 	// Please read the section "Limiter behind a reverse proxy" in the README for further information.
 	ClientIPHeader string
+
+	// SkipList represents list of keys which will be skipped by limiter
+	SkipList []string
 }
 
 // WithIPv4Mask will configure the limiter to use given mask for IPv4 address.
@@ -57,5 +60,15 @@ func WithTrustForwardHeader(enable bool) Option {
 func WithClientIPHeader(header string) Option {
 	return func(o *Options) {
 		o.ClientIPHeader = header
+	}
+}
+
+// WithSkipList will configure the limiter to use list of provided
+// exception keys (which may be IP addresses or custome header values).
+// This list will be consulted at every request and if key will be found in
+// SkipList the limiter functionality will be skipped for that key.
+func WithSkipList(wlist []string) Option {
+	return func(o *Options) {
+		o.SkipList = wlist
 	}
 }
