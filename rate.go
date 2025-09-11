@@ -1,11 +1,10 @@
 package limiter
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // Rate is the rate.
@@ -21,7 +20,7 @@ func NewRateFromFormatted(formatted string) (Rate, error) {
 
 	values := strings.Split(formatted, "-")
 	if len(values) != 2 {
-		return rate, errors.Errorf("incorrect format '%s'", formatted)
+		return rate, fmt.Errorf("incorrect format '%s'", formatted)
 	}
 
 	periods := map[string]time.Duration{
@@ -35,12 +34,12 @@ func NewRateFromFormatted(formatted string) (Rate, error) {
 
 	p, ok := periods[period]
 	if !ok {
-		return rate, errors.Errorf("incorrect period '%s'", period)
+		return rate, fmt.Errorf("incorrect period '%s'", period)
 	}
 
 	l, err := strconv.ParseInt(limit, 10, 64)
 	if err != nil {
-		return rate, errors.Errorf("incorrect limit '%s'", limit)
+		return rate, fmt.Errorf("incorrect limit '%s'", limit)
 	}
 
 	rate = Rate{

@@ -2,14 +2,14 @@ package redis
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/pkg/errors"
 	libredis "github.com/redis/go-redis/v9"
-
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/common"
 )
@@ -178,12 +178,12 @@ func (store *Store) loadLuaScripts(ctx context.Context) error {
 
 	luaIncrSHA, err := store.client.ScriptLoad(ctx, luaIncrScript).Result()
 	if err != nil {
-		return errors.Wrap(err, `failed to load "incr" lua script`)
+		return fmt.Errorf(`failed to load "incr" lua script: %w`, err)
 	}
 
 	luaPeekSHA, err := store.client.ScriptLoad(ctx, luaPeekScript).Result()
 	if err != nil {
-		return errors.Wrap(err, `failed to load "peek" lua script`)
+		return fmt.Errorf(`failed to load "peek" lua script: %w`, err)
 	}
 
 	store.luaIncrSHA = luaIncrSHA
@@ -237,7 +237,7 @@ func isLuaScriptGone(err error) bool {
 func parseCountAndTTL(cmd *libredis.Cmd) (int64, int64, error) {
 	result, err := cmd.Result()
 	if err != nil {
-		return 0, 0, errors.Wrap(err, "an error has occurred with redis command")
+		return 0, 0, fmt.Errorf("an error has occurred with redis command: %w", err)
 	}
 
 	fields, ok := result.([]interface{})
