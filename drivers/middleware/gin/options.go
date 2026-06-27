@@ -1,6 +1,7 @@
 package gin
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -28,8 +29,12 @@ func WithErrorHandler(handler ErrorHandler) Option {
 }
 
 // DefaultErrorHandler is the default ErrorHandler used by a new Middleware.
+// It logs the store error and responds with 503 so that store outages do not
+// crash the request pipeline. Override via WithErrorHandler for custom behavior
+// (e.g. fail-open).
 func DefaultErrorHandler(c *gin.Context, err error) {
-	panic(err)
+	log.Printf("limiter: store error: %v", err)
+	c.String(http.StatusServiceUnavailable, "Service Unavailable")
 }
 
 // LimitReachedHandler is an handler used to inform when the limit has exceeded.
