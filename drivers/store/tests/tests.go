@@ -21,6 +21,7 @@ func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 		Period: time.Minute,
 	})
 
+	// Reset timestamps round up to whole seconds, adding less than one second.
 	// Check counter increment.
 	{
 		for i := 1; i <= 6; i++ {
@@ -43,7 +44,7 @@ func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 
 				is.Equal(int64(3), lctx.Limit)
 				is.Equal(int64(3-i), lctx.Remaining)
-				is.True((lctx.Reset - time.Now().Unix()) <= 60)
+				is.True(time.Until(time.Unix(lctx.Reset, 0)) < time.Minute+time.Second)
 				is.False(lctx.Reached)
 
 				lctx, err = limiter.Peek(ctx, "foo")
@@ -55,7 +56,7 @@ func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 
 				is.Equal(int64(3), lctx.Limit)
 				is.Equal(int64(0), lctx.Remaining)
-				is.True((lctx.Reset - time.Now().Unix()) <= 60)
+				is.True(time.Until(time.Unix(lctx.Reset, 0)) < time.Minute+time.Second)
 				is.True(lctx.Reached)
 
 			}
@@ -70,7 +71,7 @@ func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 
 		is.Equal(int64(3), lctx.Limit)
 		is.Equal(int64(0), lctx.Remaining)
-		is.True((lctx.Reset - time.Now().Unix()) <= 60)
+		is.True(time.Until(time.Unix(lctx.Reset, 0)) < time.Minute+time.Second)
 		is.True(lctx.Reached)
 
 		lctx, err = limiter.Reset(ctx, "foo")
@@ -79,7 +80,7 @@ func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 
 		is.Equal(int64(3), lctx.Limit)
 		is.Equal(int64(3), lctx.Remaining)
-		is.True((lctx.Reset - time.Now().Unix()) <= 60)
+		is.True(time.Until(time.Unix(lctx.Reset, 0)) < time.Minute+time.Second)
 		is.False(lctx.Reached)
 
 		lctx, err = limiter.Peek(ctx, "foo")
@@ -88,7 +89,7 @@ func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 
 		is.Equal(int64(3), lctx.Limit)
 		is.Equal(int64(3), lctx.Remaining)
-		is.True((lctx.Reset - time.Now().Unix()) <= 60)
+		is.True(time.Until(time.Unix(lctx.Reset, 0)) < time.Minute+time.Second)
 		is.False(lctx.Reached)
 
 		lctx, err = limiter.Get(ctx, "foo")
@@ -101,7 +102,7 @@ func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 
 		is.Equal(int64(3), lctx.Limit)
 		is.Equal(int64(3), lctx.Remaining)
-		is.True((lctx.Reset - time.Now().Unix()) <= 60)
+		is.True(time.Until(time.Unix(lctx.Reset, 0)) < time.Minute+time.Second)
 		is.False(lctx.Reached)
 
 		lctx, err = limiter.Reset(ctx, "foo")
@@ -110,7 +111,7 @@ func TestStoreSequentialAccess(t *testing.T, store limiter.Store) {
 
 		is.Equal(int64(3), lctx.Limit)
 		is.Equal(int64(3), lctx.Remaining)
-		is.True((lctx.Reset - time.Now().Unix()) <= 60)
+		is.True(time.Until(time.Unix(lctx.Reset, 0)) < time.Minute+time.Second)
 		is.False(lctx.Reached)
 	}
 }
