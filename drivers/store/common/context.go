@@ -18,6 +18,10 @@ func GetContextFromState(now time.Time, rate limiter.Rate, expiration time.Time,
 	}
 
 	reset := expiration.Unix()
+	// Round up so the reset timestamp never precedes the actual expiration.
+	if expiration.Nanosecond() > 0 {
+		reset++
+	}
 
 	return limiter.Context{
 		Limit:     limit,
